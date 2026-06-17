@@ -1,0 +1,36 @@
+# TiBrain — Allowlist .gitignore
+# Only push: *.md *.go *.yml *.json *.sh *.cmd *.bat *.ps1
+# Plus: Makefile, Dockerfile, .gitignore, .gitattributes, .gitkeep
+
+# Ignore everything by default
+*
+
+# Hard block: directories (match at any depth)
+**/node_modules/
+/.git/
+/.claude/
+/.venv/
+/__pycache__/
+# Skip bundled internet content (VS Code Antigravity extension, MCP servers)
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Antigravity/**
+
+# Allowlist: special files
+!Makefile
+!Dockerfile
+!.gitignore
+!.gitattributes
+!.gitkeep
+
+# Allowlist: file types
+!*.md
+!*.go
+!*.yml
+!*.yaml
+!*.json
+!*.sh
+!*.cmd
+!*.bat
+!*.ps1
+
+# Allowlist: directories (so files inside are evaluated against type rules)
+!*/
