@@ -1,0 +1,17 @@
+﻿{
+    "services":  {
+                     "OpenClaw":  {
+                                      "Token":  "sk-jarvis-dev",
+                                      "Port":  8080
+                                  },
+                     "MyRouter":  {
+                                      "Instance":  "my-router",
+                                      "Port":  1809
+                                  },
+                     "CLIProxyAPI":  {
+                                         "Token":  "sk-jarvis-dev",
+                                         "Port":  1810
+                                     }
+                 },
+    "provider":  "cloudflare"
+}

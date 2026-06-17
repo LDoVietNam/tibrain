@@ -1,0 +1,95 @@
+name: Monitor Router Provider Updates
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # Daily check at midnight UTC
+  workflow_dispatch:
+
+jobs:
+  monitor-9router:
+    name: Monitor 9Router Updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check 9Router commits
+        id: check-9router
+        run: |
+          echo "Checking 9Router updates..."
+          LATEST_COMMIT=$(curl -s https://api.github.com/repos/decolua/9router/commits?per_page=1 | jq -r '.[0].sha')
+          echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
+          echo "Latest 9Router commit: $LATEST_COMMIT"
+
+      - name: Check 9Router provider changes
+        run: |
+          echo "Checking provider file changes..."
+          curl -s https://api.github.com/repos/decolua/9router/commits?path=src/providers&per_page=5 | jq '.[].sha'
+
+  monitor-llmcookiebridge:
+    name: Monitor LLMCookieBridge Updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check LLMCookieBridge commits
+        id: check-llmcookiebridge
+        run: |
+          echo "Checking LLMCookieBridge updates..."
+          LATEST_COMMIT=$(curl -s https://api.github.com/repos/tkgo11/LLMCookieBridge/commits?per_page=1 | jq -r '.[0].sha')
+          echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
+          echo "Latest LLMCookieBridge commit: $LATEST_COMMIT"
+
+      - name: Check provider implementations
+        run: |
+          echo "Checking provider file changes..."
+          curl -s https://api.github.com/repos/tkgo11/LLMCookieBridge/commits?path=src/llm_cookie_bridge/providers&per_page=5 | jq '.[].sha'
+
+  monitor-kilo:
+    name: Monitor Kilo CLI Updates
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Kilo CLI commits
+        id: check-kilo
+        run: |
+          echo "Checking Kilo CLI updates..."
+          LATEST_COMMIT=$(curl -s https://api.github.com/repos/Kilo-Org/kilo/commits?per_page=1 | jq -r '.[0].sha')
+          echo "latest_commit=$LATEST_COMMIT" >> $GITHUB_OUTPUT
+          echo "Latest Kilo CLI commit: $LATEST_COMMIT"
+
+      - name: Check gateway changes
+        run: |
+          echo "Checking gateway file changes..."
+          curl -s https://api.github.com/repos/Kilo-Org/kilo/commits?path=packages/kilo-gateway&per_page=5 | jq '.[].sha'
+
+  notify-router-agent:
+    name: Notify Router Agent
+    needs: [monitor-9router, monitor-llmcookiebridge, monitor-kilo]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Compile update report
+        id: compile-report
+        run: |
+          echo "Compiling update report..."
+          REPORT=$(cat <<EOF
+          {
+            "9router": "${{ needs.monitor-9router.outputs.check-9router.outputs.latest_commit }}",
+            "llmcookiebridge": "${{ needs.monitor-llmcookiebridge.outputs.check-llmcookiebridge.outputs.latest_commit }}",
+            "kilo": "${{ needs.monitor-kilo.outputs.check-kilo.outputs.latest_commit }}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          }
+          EOF
+          )
+          echo "report=$REPORT" >> $GITHUB_OUTPUT
+          echo "Update report compiled"
+
+      - name: Send notification to Router Agent
+        run: |
+          echo "Sending notification to Router Agent..."
+          # This would send a webhook to the running Router Agent
+          # For now, just log the report
+          echo "${{ steps.compile-report.outputs.report }}"
+
+      - name: Create GitHub Issue if updates detected
+        if: steps.compile-report.outputs.report != ''
+        run: |
+          echo "Creating GitHub issue for updates..."
+          # This would create an issue with update details
+          # For now, just log
+          echo "Would create issue with update details"

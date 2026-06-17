@@ -1,0 +1,214 @@
+---
+tags: ["tibrain", "security", "authentication", "documentation", "router"]
+scopes: ["auth", "tibrain"]
+last_updated: 2026-05-22
+---
+# ChatGPT Cookie Provider
+
+**Provider**: ChatGPT (OpenAI)
+**Type**: Multi-Tier (OAuth + Cookie)
+**Cookie Type**: API-based
+**Last Updated**: 2026-05-08
+
+## 🎯 Overview
+
+ChatGPT appears in **2 provider tiers** in Ti Router:
+1. **OAuth Provider**: OpenAI Codex OAuth (browser-based)
+2. **Cookie Provider**: ChatGPT Web session token (web-based)
+
+## 🔑 Authentication Methods
+
+### 1. OAuth Authentication
+
+**OAuth Provider**: OpenAI Codex
+**OAuth Endpoint**: https://platform.openai.com/docs/codex
+**Status**: ⚠️ Not Configured
+
+**OAuth Config**:
+```bash
+CODEX_OAUTH_CLIENT_ID=
+CODEX_OAUTH_CLIENT_SECRET=
+CODEX_OAUTH_TOKEN_FILE=Z:\06_AUTH\codex.oauth
+```
+
+**Pros**:
+- Browser-based authentication
+- No API key management
+- Auto token refresh
+
+**Cons**:
+- Requires OAuth setup
+- More complex configuration
+- Depends on OAuth flow
+
+### 2. Cookie Authentication (Web-Based)
+
+**Cookie Type**: API-based
+**Management**: HTTP API endpoints
+**Status**: ⚠️ Not Set
+
+**API Endpoints**:
+```bash
+# Set ChatGPT cookie
+POST /api/cookie-providers/set
+{
+  "provider": "chatgpt",
+  "cookie": {
+    "__Secure-next-auth.session-token": "your-session-token"
+  },
+  "expires_in": 2592000  # 30 days
+}
+
+# Get ChatGPT cookie status
+GET /api/cookie-providers/get?provider=chatgpt
+
+# Validate ChatGPT cookie
+POST /api/cookie-providers/validate
+```
+
+**Cookie Format**:
+- `__Secure-next-auth.session-token` - Primary session token
+
+**Pros**:
+- Uses existing browser session
+- No API key needed
+- Access to web-based features
+- Free tier access possible
+
+**Cons**:
+- Targets reverse-engineered endpoints
+- May break without notice
+- Not production-ready
+- Security risks
+
+## 📋 Implementation Details
+
+### Cookie Provider Registration
+
+**File**: `../../../../Ti/apps/core/router/cmd/routerd/cookie_providers.go`
+
+```go
+var cookieProviders = map[string]*providers.CookieProvider{
+    "chatgpt": providers.ChatGPTEnterprise,
+}
+```
+
+### Cookie Structure
+
+**Required Cookies**:
+- `__Secure-next-auth.session-token` - Primary session token
+
+### Models Supported
+
+- gpt-5.4
+- gpt-4o
+- o3-mini
+- o1
+
+## 🔧 Usage Examples
+
+### Setting Cookie via API
+
+```bash
+curl -X POST http://localhost:1807/api/cookie-providers/set \
+  -H "Content-Type: application/json" \
+  -d '{
+    "provider": "chatgpt",
+    "cookie": {
+      "__Secure-next-auth.session-token": "your-session-token-here"
+    },
+    "expires_in": 2592000
+  }'
+```
+
+### Checking Cookie Status
+
+```bash
+curl http://localhost:1807/api/cookie-providers/get?provider=chatgpt
+```
+
+### Validating All Cookies
+
+```bash
+curl -X POST http://localhost:1807/api/cookie-providers/validate
+```
+
+## 🌐 ChatGPT Web (LLMCookieBridge)
+
+**Source**: https://github.com/tkgo11/LLMCookieBridge
+**Cookie Type**: LLMCookieBridge
+**Status**: ⚠️ Not Implemented in Ti Router
+
+**Cookie Required**:
+```python
+cookies={
+    "__Secure-next-auth.session-token": os.environ["CHATGPT_SESSION_TOKEN"],
+}
+```
+
+**Alternative**: Access Token
+```python
+bridge = LLMCookieBridge.create(
+    "chatgpt",
+    access_token="your-bearer-token",
+)
+```
+
+**Python Example**:
+```python
+import os
+from llm_cookie_bridge import LLMCookieBridge
+
+bridge = LLMCookieBridge.create(
+    "chatgpt",
+    cookies={
+        "__Secure-next-auth.session-token": os.environ["CHATGPT_SESSION_TOKEN"],
+    },
+)
+
+async with bridge:
+    response = await bridge.chat("Say hello")
+    print(response.text)
+```
+
+**Provider-Specific Options**:
+- `conversation_id` - Continue an existing conversation
+- `parent_id` - Explicit parent message id
+- `model` - ChatGPT web model selector, defaults to `"auto"`
+- `disable_history` - Sets `history_and_training_disabled`
+
+## ⚠️ Security Considerations
+
+**Cookie Authentication Risks**:
+- Targets reverse-engineered web endpoints
+- May break without notice
+- Not suitable for production
+- Session expiration issues
+- Potential account flagging
+
+**Best Practices**:
+- Use OAuth authentication for production
+- Use cookie authentication only for testing/experimentation
+- Implement proper cookie refresh logic
+- Monitor for endpoint changes
+- Have fallback to OAuth
+
+## 📊 Comparison
+
+| Method | Stability | Production Ready | Cost | Setup Complexity |
+|--------|-----------|------------------|------|------------------|
+| **OAuth** | ✅ High | ✅ Yes | Paid | Medium |
+| **Cookie (API-based)** | ⚠️ Low | ❌ No | Free/Varies | Low |
+| **Cookie (LLMCookieBridge)** | ⚠️ Low | ❌ No | Free/Varies | Medium |
+
+## 🔗 Related Documentation
+
+- [OpenAI Codex](https://platform.openai.com/docs/codex)
+- [ChatGPT Web](https://chat.openai.com)
+- [LLMCookieBridge ChatGPT Docs](https://github.com/tkgo11/LLMCookieBridge#chatgpt--openai-web)
+- [Ti Router Providers Config](../../../../Ti/apps/core/router/configs/providers.yaml)
+
+---
+
+**Generated by**: Devin CLI
+**Date**: 2026-05-08

@@ -1,0 +1,220 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  automation-tests:
+    name: Automation Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.0'
+        cache: true
+        cache-dependency-path: apps/automation/go.sum
+
+    - name: Run go vet
+      working-directory: apps/automation
+      run: go vet ./...
+
+    - name: Run go fmt
+      working-directory: apps/automation
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go code is not formatted:"
+          gofmt -d .
+          exit 1
+        fi
+
+    - name: Run unit tests
+      working-directory: apps/automation
+      run: go test -v -race -coverprofile=coverage.out ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: apps/automation/coverage.out
+        flags: automation
+        name: automation-coverage
+
+  cli-tests:
+    name: CLI Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.0'
+        cache: true
+        cache-dependency-path: apps/cli/go.sum
+
+    - name: Run go vet
+      working-directory: apps/cli
+      run: go vet ./...
+
+    - name: Run go fmt
+      working-directory: apps/cli
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go code is not formatted:"
+          gofmt -d .
+          exit 1
+        fi
+
+    - name: Run unit tests
+      working-directory: apps/cli
+      run: go test -v -race -coverprofile=coverage.out ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: apps/cli/coverage.out
+        flags: cli
+        name: cli-coverage
+
+  router-tests:
+    name: Router Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.0'
+        cache: true
+        cache-dependency-path: apps/router/go.sum
+
+    - name: Run go vet
+      working-directory: apps/router
+      run: go vet ./...
+
+    - name: Run go fmt
+      working-directory: apps/router
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go code is not formatted:"
+          gofmt -d .
+          exit 1
+        fi
+
+    - name: Run unit tests
+      working-directory: apps/router
+      run: go test -v -race -coverprofile=coverage.out ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: apps/router/coverage.out
+        flags: router
+        name: router-coverage
+
+  tui-tests:
+    name: TUI Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.0'
+        cache: true
+        cache-dependency-path: apps/tui/go.sum
+
+    - name: Run go vet
+      working-directory: apps/tui
+      run: go vet ./...
+
+    - name: Run go fmt
+      working-directory: apps/tui
+      run: |
+        if [ -n "$(gofmt -l .)" ]; then
+          echo "Go code is not formatted:"
+          gofmt -d .
+          exit 1
+        fi
+
+    - name: Run unit tests
+      working-directory: apps/tui
+      run: go test -v -race -coverprofile=coverage.out ./...
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: apps/tui/coverage.out
+        flags: tui
+        name: tui-coverage
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    needs: [automation-tests, cli-tests, router-tests, tui-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.0'
+
+    - name: Run CLI integration tests
+      working-directory: apps/cli
+      run: go test -v -race ./internal/integration/...
+
+    - name: Run Router integration tests
+      working-directory: apps/router
+      run: go test -v -race ./cmd/routerd/... ./layers/integration/...
+
+    - name: Run Router E2E tests
+      working-directory: apps/router
+      run: go test -v -race -run E2E ./cmd/routerd/...
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: '1.25.0'
+
+    - name: Build Automation
+      working-directory: apps/automation
+      run: go build -v ./...
+
+    - name: Build CLI
+      working-directory: apps/cli
+      run: go build -v ./...
+
+    - name: Build Router
+      working-directory: apps/router
+      run: go build -v ./...
+
+    - name: Build TUI
+      working-directory: apps/tui
+      run: go build -v ./...

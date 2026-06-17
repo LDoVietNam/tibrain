@@ -1,0 +1,136 @@
+{
+  "timestamp": "2026-05-16T01:06:40.3403068+07:00",
+  "usage_analytics": {
+    "interaction_stats": {
+      "avg_session_time": 11.85,
+      "most_popular_topic": "api documentation",
+      "peak_usage_time": "morning",
+      "total_queries": 350,
+      "unique_users": 2,
+      "user_retention_rate": 1
+    },
+    "performance_metrics": 3,
+    "top_queries": [
+      {
+        "frequency": 150,
+        "query": "api documentation",
+        "success_rate": 0.95,
+        "trend": "increasing"
+      },
+      {
+        "frequency": 120,
+        "query": "setup guide",
+        "success_rate": 0.88,
+        "trend": "stable"
+      },
+      {
+        "frequency": 80,
+        "query": "troubleshooting",
+        "success_rate": 0.75,
+        "trend": "decreasing"
+      }
+    ],
+    "total_access_patterns": 2,
+    "total_query_patterns": 3,
+    "total_users": 2,
+    "user_segments": {
+      "advanced": 1,
+      "beginner": 1
+    }
+  },
+  "content_lifecycle": {
+    "aging_analysis": 2,
+    "content_health": {
+      "avg_age_days": 22.5,
+      "avg_quality_score": 0.85,
+      "retirement_rate": 0.05,
+      "usage_rate": 0.75
+    },
+    "lifecycle_metrics": {
+      "overall": {
+        "metric_name": "Overall Lifecycle",
+        "total_content": 2,
+        "avg_age": 22.5,
+        "quality_score": 0.85,
+        "usage_rate": 0.75,
+        "retirement_rate": 0.05,
+        "last_updated": "2026-05-16T01:06:40.3403068+07:00"
+      }
+    },
+    "retirement_schedule": 1,
+    "total_content_stages": 2
+  },
+  "knowledge_gap_analysis": {
+    "filling_strategies": 2,
+    "gap_filling_progress": {
+      "missing_documentation": 0.2,
+      "outdated_content": 0.375
+    },
+    "gap_metrics": {
+      "missing_documentation": {
+        "gap_type": "missing_documentation",
+        "total_gaps": 5,
+        "critical_gaps": 2,
+        "filled_gaps": 1,
+        "avg_fill_time": 14,
+        "last_updated": "2026-05-16T01:06:40.3403068+07:00"
+      },
+      "outdated_content": {
+        "gap_type": "outdated_content",
+        "total_gaps": 8,
+        "critical_gaps": 1,
+        "filled_gaps": 3,
+        "avg_fill_time": 7,
+        "last_updated": "2026-05-16T01:06:40.3403068+07:00"
+      }
+    },
+    "priority_matrix": {
+      "incomplete_examples": 0.6,
+      "missing_documentation": 0.9,
+      "missing_tutorials": 0.8,
+      "outdated_content": 0.7
+    },
+    "total_gaps": 2
+  },
+  "roi_measurement": {
+    "cost_benefit_ratio": {
+      "cost_benefit_ratio": 1.8666666666666667,
+      "monthly_benefit": 28000,
+      "monthly_cost": 15000
+    },
+    "efficiency_metrics": 2,
+    "roi_calculations": {
+      "annual": {
+        "calculation_id": "roi_annual",
+        "period": "annual",
+        "total_cost": 230000,
+        "total_benefit": 336000,
+        "roi": 46.08695652173913,
+        "payback_period": 8.214285714285714,
+        "npv": 106000,
+        "irr": 0.4608695652173913,
+        "last_calculated": "2026-05-16T01:06:40.3403068+07:00"
+      }
+    },
+    "total_benefits": 3,
+    "total_costs": 3
+  },
+  "insights": [
+    "High query volume indicates strong user engagement",
+    "Excellent user retention rate",
+    "Content aging analysis reveals maintenance opportunities",
+    "Knowledge gaps identified require attention"
+  ],
+  "recommendations": [
+    "Continue monitoring analytics for trend identification",
+    "Implement automated reporting for continuous improvement"
+  ],
+  "quality_metrics": {
+    "content_lifecycle_tracking": 0.01,
+    "gap_detection_accuracy": 0.85,
+    "overall_quality": 0.366,
+    "query_pattern_coverage": 0.03,
+    "roi_calculation_precision": 0.9,
+    "user_behavior_completeness": 0.04
+  }
+}

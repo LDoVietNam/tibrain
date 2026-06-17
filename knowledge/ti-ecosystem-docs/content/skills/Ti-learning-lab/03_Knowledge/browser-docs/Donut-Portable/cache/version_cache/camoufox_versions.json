@@ -1,0 +1,125 @@
+{
+  "releases": [
+    {
+      "version": "v135.0.1-beta.24",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v135.0.1-beta.23",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v135.0-beta.22",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v135.0-beta.21",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v134.0.2-beta.20",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v133.0-beta.19",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v133.0-beta.18",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v132.0.2-beta.17",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v132.0.2-beta.16",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v132.0-beta.15",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v132.0-beta.14",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.13",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.12",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.11",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.10",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.9",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.8",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.7",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0.1-beta.6",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v130.0-beta.5",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v129.0-beta.4",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v129.0-beta.3",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v129.0-beta.2",
+      "date": "",
+      "is_prerelease": false
+    },
+    {
+      "version": "v129.0-beta.1",
+      "date": "",
+      "is_prerelease": false
+    }
+  ],
+  "timestamp": 1777794840
+}

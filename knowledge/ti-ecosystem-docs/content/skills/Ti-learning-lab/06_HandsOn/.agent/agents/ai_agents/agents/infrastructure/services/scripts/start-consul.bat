@@ -1,0 +1,3 @@
+@echo off
+echo Starting Consul...
+consul agent -config-file=consul/consul.json

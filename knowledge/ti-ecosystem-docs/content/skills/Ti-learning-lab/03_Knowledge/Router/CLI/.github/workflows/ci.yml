@@ -1,0 +1,32 @@
+name: ci-go123
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+env:
+  GOTOOLCHAIN: local
+  GOWORK: off
+  GO_VERSION: "1.23"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        go-version: [ "1.23.x" ]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ matrix.go-version }}
+          cache: true
+      - run: go version
+      - run: make check-go
+      - run: go mod download
+      - run: gofmt -w $(find . -name '*.go' -not -path './vendor/*') && git diff --exit-code
+      - run: make test-fast
+      - run: make build-small
+      - run: ./bin/ti-cli version
+      - run: ./bin/ti-cli doctor || true

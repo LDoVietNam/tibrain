@@ -1,0 +1,1368 @@
+{
+  "analytics_settings": {
+    "count": "0-1/2",
+    "rows": [
+      {
+        "id": "70d999b4-7735-4875-8b06-d140477e060f",
+        "setting_key": "page_views",
+        "setting_value": 49740,
+        "updated_at": "2026-01-18T21:56:30.245844+00:00",
+        "updated_by": null
+      },
+      {
+        "id": "4025b675-53bf-40e6-912f-9f46f298f054",
+        "setting_key": "visitors_7_days",
+        "setting_value": 5880,
+        "updated_at": "2026-01-18T21:56:30.245844+00:00",
+        "updated_by": null
+      }
+    ]
+  },
+  "announcement_reads": {
+    "count": "*/0",
+    "rows": []
+  },
+  "announcements": {
+    "count": "0-0/1",
+    "rows": [
+      {
+        "id": "bbc376a5-1bc8-41e7-8a28-f4658c8c87a9",
+        "title": "Annoucement",
+        "content": "Welcome You All, This is a short message from AhmiVault If you like my stuff and want more join my telegram channel.\n",
+        "is_active": true,
+        "created_by": null,
+        "created_at": "2026-01-07T02:28:58.626488+00:00",
+        "updated_at": "2026-01-07T02:28:58.626488+00:00"
+      }
+    ]
+  },
+  "broadcast_messages": {
+    "count": "0-0/1",
+    "rows": [
+      {
+        "id": "9e24296a-5944-4861-a22c-9f2b29f8af69",
+        "title": "Telegram Channel For Free Stuff",
+        "content": "Join Telegram Channel For Free Stuff\n\nhttps://t.me/ahmivaults",
+        "target_audience": "all",
+        "created_by": "1822f9d5-713d-4b35-83e0-8d5e3d6128bf",
+        "created_at": "2026-01-29T18:14:14.56+00:00",
+        "is_active": true
+      }
+    ]
+  },
+  "broadcast_reads": {
+    "count": "*/0",
+    "rows": []
+  },
+  "inside_vault_items": {
+    "count": "0-42/43",
+    "rows": [
+      {
+        "id": "8e437163-93c4-445c-ade4-706427c87bec",
+        "title": "CapCut Pro",
+        "description": "1 Month Subscription Method",
+        "icon_name": "Video",
+        "category": "Methods - Subscriptions",
+        "badge": "NEW",
+        "badge_color": "green",
+        "border_color": "pink",
+        "display_order": 10,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "57babe72-d90a-4652-a689-c3d8db706319",
+        "title": "ChatGPT Business",
+        "description": "1 Month Access Method",
+        "icon_name": "Brain",
+        "category": "Methods - Subscriptions",
+        "badge": "HOT",
+        "badge_color": "red",
+        "border_color": "green",
+        "display_order": 12,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "a64bd7b2-7528-4187-8ebd-aeb7e1e38fbd",
+        "title": "ChatGPT Plus",
+        "description": "1 Month Access Method",
+        "icon_name": "Brain",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "green",
+        "display_order": 13,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "b94b7637-eeec-484b-bc33-9fd46ae22f49",
+        "title": "Prime Video",
+        "description": "Streaming Access Method",
+        "icon_name": "Video",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "blue",
+        "display_order": 16,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "be9a265b-ab82-4777-88ba-2f58110bae22",
+        "title": "Gemini Pro",
+        "description": "1 Year + Documentation",
+        "icon_name": "Sparkles",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "purple",
+        "display_order": 17,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "2ce88cd2-70f3-4ccf-ad9c-c2f4c62cda8e",
+        "title": "LinkedIn Sales Navigator",
+        "description": "2 Month Access",
+        "icon_name": "Globe",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "blue",
+        "display_order": 19,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "7909802d-23dc-4bb3-a11b-0a1bd3215ab2",
+        "title": "WhatsApp Meta Verification",
+        "description": "Blue Badge Verification",
+        "icon_name": "MessageCircle",
+        "category": "Methods - Subscriptions",
+        "badge": "HOT",
+        "badge_color": "red",
+        "border_color": "green",
+        "display_order": 20,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "7ebacd83-ffe0-4bac-8e67-e444b106cb0c",
+        "title": "Hacking & Marketing Courses",
+        "description": "Premium Educational Content",
+        "icon_name": "BookOpen",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "orange",
+        "display_order": 21,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "b1dfd398-4ff5-4c81-9f1a-32468077b4fc",
+        "title": "Doc Generator",
+        "description": "Direct access to ahmivault.store for IDs/Docs",
+        "icon_name": "Shield",
+        "category": "Elite Tools",
+        "badge": "VIP",
+        "badge_color": "purple",
+        "border_color": "white",
+        "display_order": 30,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "e6106a37-5938-43e9-a239-ac1d72486301",
+        "title": "Private BINS",
+        "description": "High-success, fresh BINS updated regularly",
+        "icon_name": "Zap",
+        "category": "Elite Tools",
+        "badge": "DAILY",
+        "badge_color": "blue",
+        "border_color": "yellow",
+        "display_order": 31,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "8363d399-317f-4796-9338-af2db18c9435",
+        "title": "Premium Checkers",
+        "description": "Private checkers for your workflow",
+        "icon_name": "Lock",
+        "category": "Elite Tools",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "cyan",
+        "display_order": 32,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "e2806fef-71d5-488e-a15a-1dc3e68532ab",
+        "title": "Daily Leaks",
+        "description": "Fresh updates and rare resource drops",
+        "icon_name": "Rocket",
+        "category": "Elite Tools",
+        "badge": "NEW",
+        "badge_color": "green",
+        "border_color": "pink",
+        "display_order": 33,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "e2cb9f7e-01d6-44c9-ac85-0c5dfecc297f",
+        "title": "VIP Giveaways",
+        "description": "Surprise exclusive drops for Inner Circle",
+        "icon_name": "Gift",
+        "category": "Elite Tools",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "purple",
+        "display_order": 34,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "c0f7dbb2-7cc6-4bc6-ade5-a470d2992edf",
+        "title": "Pandora Box",
+        "description": "Premium starter pack for new VIP members",
+        "icon_name": "Gift",
+        "category": "Starter Packs",
+        "badge": "FREE",
+        "badge_color": "green",
+        "border_color": "purple",
+        "display_order": 40,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "02db2fca-f8af-4497-b746-0fe5a0ff3870",
+        "title": "Black Hat Pack",
+        "description": "Advanced techniques collection",
+        "icon_name": "Lock",
+        "category": "Starter Packs",
+        "badge": "FREE",
+        "badge_color": "green",
+        "border_color": "red",
+        "display_order": 41,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "38913e99-f1db-497d-904b-1f920c5b6ba2",
+        "title": "Hackers Pack",
+        "description": "Complete hacking resources bundle",
+        "icon_name": "Code",
+        "category": "Starter Packs",
+        "badge": "FREE",
+        "badge_color": "green",
+        "border_color": "cyan",
+        "display_order": 42,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "bbb62671-8846-4ac8-82a6-a25951d8ee3a",
+        "title": "All-in-One Premium Hub",
+        "description": "Everything you need in one place",
+        "icon_name": "Crown",
+        "category": "VIP Advantage",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "yellow",
+        "display_order": 50,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "f7112625-9b73-40fa-95d6-347ae2a2ef18",
+        "title": "Fresh Daily Updates",
+        "description": "New methods and resources every day",
+        "icon_name": "Sparkles",
+        "category": "VIP Advantage",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "green",
+        "display_order": 51,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "d03de2b4-3cae-4035-81a3-923ca7da452f",
+        "title": "Trusted Community",
+        "description": "100+ Active Members",
+        "icon_name": "Shield",
+        "category": "VIP Advantage",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "blue",
+        "display_order": 52,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "0c8bb12c-4ed0-4805-8292-c437356cf08b",
+        "title": "Direct Support",
+        "description": "Fast replies and personal assistance",
+        "icon_name": "MessageCircle",
+        "category": "VIP Advantage",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "white",
+        "display_order": 53,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-18T12:39:35.999074+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "5a42ab99-a0f3-41a4-a11a-d31fe3b5474f",
+        "title": "Microsoft 365 Copilot",
+        "description": "AI Assistant Full Access",
+        "icon_name": "Brain",
+        "category": "Methods - Subscriptions",
+        "badge": "HOT",
+        "badge_color": "red",
+        "border_color": "cyan",
+        "display_order": 24,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T12:52:58.526188+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "3f8ca570-1432-46d5-85bc-44c4525351b0",
+        "title": "Notion AI",
+        "description": "Workspace AI Features",
+        "icon_name": "BookOpen",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "white",
+        "display_order": 26,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T12:52:58.526188+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "4bcf4334-4fc3-4d0d-9b76-4744a8ce3c04",
+        "title": "Adobe Creative Cloud",
+        "description": "Full Suite Access",
+        "icon_name": "Palette",
+        "category": "Methods - Creative",
+        "badge": "HOT",
+        "badge_color": "red",
+        "border_color": "red",
+        "display_order": 80,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T12:52:58.526188+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "a63ea3d1-75ac-42fa-9bcb-5b34b44d0502",
+        "title": "Coursera Plus",
+        "description": "Unlimited Course Access",
+        "icon_name": "BookOpen",
+        "category": "Methods - Elite",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "blue",
+        "display_order": 4,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-02-09T10:07:51.801006+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "0fec8b8c-bd9d-427a-83ed-ef93c7a59264",
+        "title": "Dashlane Premium",
+        "description": "Security Suite Access",
+        "icon_name": "Lock",
+        "category": "Methods - Security",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "purple",
+        "display_order": 73,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T15:32:13.533545+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "6abed5bf-386e-49c3-b90f-fa465a5f852b",
+        "title": "Canva Pro AntiBan",
+        "description": "Teacher Panel + Full Documentation",
+        "icon_name": "Palette",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "cyan",
+        "display_order": 11,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-24T21:27:31.378135+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "4517a526-21fd-4190-8d5b-5f61f44d434f",
+        "title": "1Password",
+        "description": "Password Manager",
+        "icon_name": "Lock",
+        "category": "Methods - Security",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "cyan",
+        "display_order": 72,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T15:32:12.327738+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "8846e5b0-d04d-448e-be7b-11dc41a96306",
+        "title": "Adobe Creative Cloud Panel 5000 Accounts",
+        "description": "1k - 5k Licenses Available",
+        "icon_name": "Palette",
+        "category": "Methods - Elite",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "red",
+        "display_order": 3,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-21T20:11:56.1287+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "3b6ba5f8-975d-4214-b64b-d47659d83542",
+        "title": "Google AI Ultra Panel",
+        "description": "30 Days Panel Access",
+        "icon_name": "Brain",
+        "category": "Methods - Elite",
+        "badge": "NEW",
+        "badge_color": "green",
+        "border_color": "blue",
+        "display_order": 2,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-21T22:03:08.737742+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "b718cd80-8a80-4337-ae99-506b30091e4c",
+        "title": "LinkedIn Premium 3 Months",
+        "description": "Premium Account Access",
+        "icon_name": "Globe",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "blue",
+        "display_order": 18,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-24T21:25:10.301968+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "064c5817-e3c4-45cc-92d6-d9605cf88da3",
+        "title": "GitHub Education Verify Method",
+        "description": "Full Student Pack + Documentation",
+        "icon_name": "Code",
+        "category": "Methods - Elite",
+        "badge": "HOT",
+        "badge_color": "red",
+        "border_color": "purple",
+        "display_order": 1,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-24T21:25:17.871864+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "f23fce36-04d0-4d3a-b657-ad6e1771b6f4",
+        "title": "Spotify Premium Edu + Pro",
+        "description": "Premium Account Method",
+        "icon_name": "Music",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "green",
+        "display_order": 15,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-24T21:27:45.948312+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "cbd63217-1d05-4130-aeea-6a256c70daf4",
+        "title": "YouTube Premium Edu + Pro",
+        "description": "Full Premium Access",
+        "icon_name": "Video",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "red",
+        "display_order": 14,
+        "is_active": true,
+        "created_at": "2026-01-18T12:39:35.999074+00:00",
+        "updated_at": "2026-01-24T21:28:07.421594+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "6234a561-085b-45b1-99d6-362f5bdbf73b",
+        "title": "Grammarly Premium",
+        "description": "Writing Assistant Pro",
+        "icon_name": "BookOpen",
+        "category": "Methods - Subscriptions",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "green",
+        "display_order": 27,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-24T21:28:38.723826+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "762a99a2-cdd7-4639-8065-20fdd80a59f6",
+        "title": "SMS Verification",
+        "description": "Bypass phone verification",
+        "icon_name": "MessageCircle",
+        "category": "Elite Tools",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "green",
+        "display_order": 35,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T12:52:58.526188+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "0e570551-9b89-4c7f-8adc-64051b70ec2f",
+        "title": "Email Bomber",
+        "description": "Marketing automation tool",
+        "icon_name": "Mail",
+        "category": "Elite Tools",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "red",
+        "display_order": 36,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T12:52:58.526188+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "7ba3fcc2-0b64-4c50-b474-baa0c7385460",
+        "title": "Account Generators",
+        "description": "Auto-gen premium accounts",
+        "icon_name": "Zap",
+        "category": "Elite Tools",
+        "badge": "VIP",
+        "badge_color": "purple",
+        "border_color": "yellow",
+        "display_order": 37,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T12:52:58.526188+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "0db63489-8d0e-434a-996e-c2ab091b741b",
+        "title": "DaVinci Resolve Studio",
+        "description": "Pro Video Editor",
+        "icon_name": "Video",
+        "category": "Methods - Creative",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "cyan",
+        "display_order": 84,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-18T15:32:27.217808+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "05da7303-6fc1-48f9-ad19-67bcd91db278",
+        "title": "Microsoft 365 1 year Family",
+        "description": "Microsoft 365 1 year without edu mail",
+        "icon_name": "Star",
+        "category": "Methods - Elite",
+        "badge": "NEW",
+        "badge_color": "yellow",
+        "border_color": "white",
+        "display_order": 0,
+        "is_active": true,
+        "created_at": "2026-01-24T21:24:28.676754+00:00",
+        "updated_at": "2026-01-24T21:26:25.796953+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "246283c3-6563-4a14-8b39-9c5993e50e57",
+        "title": "Skillshare Premium",
+        "description": "Creative Courses Access",
+        "icon_name": "Palette",
+        "category": "Methods - Elite",
+        "badge": null,
+        "badge_color": "yellow",
+        "border_color": "orange",
+        "display_order": 6,
+        "is_active": true,
+        "created_at": "2026-01-18T12:52:58.526188+00:00",
+        "updated_at": "2026-01-24T21:27:04.561626+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "a651c035-ec18-4069-9541-9f3625143ab0",
+        "title": "AutoDesk 3000 members panel method",
+        "description": null,
+        "icon_name": "Star",
+        "category": "Methods - Elite",
+        "badge": "HOT",
+        "badge_color": "yellow",
+        "border_color": "white",
+        "display_order": 0,
+        "is_active": true,
+        "created_at": "2026-02-09T10:10:17.872134+00:00",
+        "updated_at": "2026-02-09T10:10:17.872134+00:00",
+        "created_by": null,
+        "highlight_style": "none"
+      },
+      {
+        "id": "b9d2ba57-fb0e-402e-be57-9f55568eecf2",
+        "title": "Capcut Pro Team Method",
+        "description": "3 month 6 months 12 months method",
+        "icon_name": "Star",
+        "category": "Methods - Elite",
+        "badge": "HOT",
+        "badge_color": "yellow",
+        "border_color": "white",
+        "display_order": 0,
+        "is_active": true,
+        "created_at": "2026-02-09T10:09:25.771341+00:00",
+        "updated_at": "2026-02-09T10:23:22.668021+00:00",
+        "created_by": null,
+        "highlight_style": "pulse"
+      },
+      {
+        "id": "de9b8e51-0c32-4660-b594-958d664a0dc6",
+        "title": "LinkedIn Carrier Premium 1 year",
+        "description": "Method with updated Slips",
+        "icon_name": "Star",
+        "category": "Methods - Elite",
+        "badge": "NEW HOT",
+        "badge_color": "yellow",
+        "border_color": "white",
+        "display_order": 0,
+        "is_active": true,
+        "created_at": "2026-01-24T21:23:01.230152+00:00",
+        "updated_at": "2026-02-09T10:23:55.303773+00:00",
+        "created_by": null,
+        "highlight_style": "premium"
+      }
+    ]
+  },
+  "inside_vault_pricing": {
+    "count": "0-0/1",
+    "rows": [
+      {
+        "id": "805031c6-3584-4f70-a53e-c6a7a56ebf1f",
+        "entry_price": 50,
+        "entry_duration": "6 Months (Channels Access Only)",
+        "maintenance_price": 5,
+        "maintenance_period": "Monthly (For Website)",
+        "cta_button_text": "JOIN VIP",
+        "cta_subtitle": "SECURE ACCESS NOW",
+        "telegram_link": "https://t.me/ahmivault",
+        "updated_at": "2026-02-14T00:02:33.352144+00:00",
+        "updated_by": null
+      }
+    ]
+  },
+  "inside_vault_tagline": {
+    "count": "0-0/1",
+    "rows": [
+      {
+        "id": "1373df27-28e2-4b37-8b4e-6e6098f166ae",
+        "title": "🚀 Want to Start Your Own Reselling Business?",
+        "description": "Buy the methods once, create unlimited accounts, and build your own profitable empire. Thousands are already making money with these exact methods. Your turn.",
+        "highlight_text": "build your own profitable empire",
+        "badge_text": "BEST DEAL",
+        "is_active": true,
+        "updated_at": "2026-01-18T12:54:37.026829+00:00",
+        "updated_by": null
+      }
+    ]
+  },
+  "linkedin_coupon_conversions": {
+    "count": "*/0",
+    "rows": []
+  },
+  "module_permissions": {
+    "count": "*/0",
+    "rows": []
+  },
+  "page_analytics": {
+    "count": "*/0",
+    "rows": []
+  },
+  "pro_tools_content": {
+    "count": "*/0",
+    "rows": []
+  },
+  "pro_tools_subscriptions": {
+    "count": "0-0/1",
+    "rows": [
+      {
+        "id": "c8657ac4-4fff-4918-87ef-b35ba55af1bb",
+        "user_id": "e44054a4-e44c-41a5-afd3-2582f46c0384",
+        "promo_code_id": "bbdcaccb-50b5-4f7d-ab4a-25681c9ebdf9",
+        "started_at": "2026-02-16T17:20:36.689683+00:00",
+        "expires_at": "2026-05-17T17:20:36.506+00:00",
+        "is_active": true,
+        "created_at": "2026-02-16T17:20:36.689683+00:00",
+        "updated_at": "2026-02-16T17:20:36.689683+00:00"
+      }
+    ]
+  },
+  "products": {
+    "count": "0-6/7",
+    "rows": [
+      {
+        "id": "b3258829-09c2-4ace-849b-ffd3006d64d5",
+        "name": "LinkedIn Sales Nav Or Career 2 Months",
+        "description": "LinkedIn Sales Nav Or Career  2 Months",
+        "price": "5",
+        "original_price": null,
+        "category": "Digital",
+        "rating": 4.5,
+        "in_stock": true,
+        "featured": false,
+        "image_url": "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/product-images/products/aaab2978-af80-459e-a40c-6564c02dcbe8.png",
+        "whatsapp_message": null,
+        "created_at": "2026-01-27T21:11:22.508825+00:00",
+        "updated_at": "2026-02-09T22:15:32.707001+00:00",
+        "currency": "$"
+      },
+      {
+        "id": "03eb84c3-5964-4344-b9d4-f202a7df9a6e",
+        "name": "LinkedIn Career Premium 12 Month",
+        "description": "LinkedIn Career Premium 12 Month",
+        "price": "8",
+        "original_price": "240",
+        "category": "Digital",
+        "rating": 4.5,
+        "in_stock": true,
+        "featured": false,
+        "image_url": "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/product-images/products/b619f707-cef3-4dfd-a2ca-095c678a715b.jpg",
+        "whatsapp_message": null,
+        "created_at": "2026-01-27T21:05:12.485145+00:00",
+        "updated_at": "2026-02-09T22:16:26.835878+00:00",
+        "currency": "$"
+      },
+      {
+        "id": "005674fa-2389-4767-9279-a81a4b812f24",
+        "name": "Google Ai Ultra Account",
+        "description": "25 days warranty 45k Credits VEO3",
+        "price": "4",
+        "original_price": null,
+        "category": "Digital",
+        "rating": 4.5,
+        "in_stock": false,
+        "featured": false,
+        "image_url": "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/product-images/products/db285b2e-cf5e-4db8-a7db-c2cac3a75ea6.webp",
+        "whatsapp_message": null,
+        "created_at": "2026-02-09T22:15:03.245444+00:00",
+        "updated_at": "2026-02-11T00:36:48.777173+00:00",
+        "currency": "$"
+      },
+      {
+        "id": "0ea7ba73-5de3-4c25-ad3d-84520a079671",
+        "name": "GitHub Education Verification",
+        "description": "GitHub Education Verification 2 Years",
+        "price": "10",
+        "original_price": null,
+        "category": "Digital",
+        "rating": 4.5,
+        "in_stock": true,
+        "featured": false,
+        "image_url": "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/product-images/products/e43fc20d-1302-4a43-afe2-34c75731c486.jpg",
+        "whatsapp_message": null,
+        "created_at": "2026-01-27T21:09:18.553876+00:00",
+        "updated_at": "2026-01-27T21:09:18.553876+00:00",
+        "currency": "$"
+      },
+      {
+        "id": "0dc9ad49-c58d-4f5c-91a0-762b1c2acfd3",
+        "name": "Microsoft Family 12-Month",
+        "description": "Microsoft M365 Family 12-Month",
+        "price": "10",
+        "original_price": "129.99",
+        "category": "Digital",
+        "rating": 4.5,
+        "in_stock": true,
+        "featured": false,
+        "image_url": "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/product-images/products/51f75e16-a6b2-403b-910a-51b4410787cb.jpg",
+        "whatsapp_message": null,
+        "created_at": "2026-01-27T21:10:29.122879+00:00",
+        "updated_at": "2026-01-27T21:10:29.122879+00:00",
+        "currency": "$"
+      },
+      {
+        "id": "625f577f-26a9-402e-b748-2733636ac8c7",
+        "name": "Chatgpt Go 1 Year",
+        "description": "Chatgpt Go 1 Year Fresh Account.",
+        "price": "5",
+        "original_price": null,
+        "category": "Digital",
+        "rating": 4.5,
+        "in_stock": false,
+        "featured": false,
+        "image_url": null,
+        "whatsapp_message": "Hi! I want to Purchase Chatgpt Go 1 Year.",
+        "created_at": "2026-01-07T03:07:50.799243+00:00",
+        "updated_at": "2026-01-27T21:10:36.324842+00:00",
+        "currency": "$"
+      },
+      {
+        "id": "0a2e6645-dad1-470e-a542-2667f6c78dbd",
+        "name": "Canva Edu Panel 500 Slot",
+        "description": "500 Slot can be added best for resellers",
+        "price": "10",
+        "original_price": null,
+        "category": "Digital",
+        "rating": 4.5,
+        "in_stock": true,
+        "featured": false,
+        "image_url": "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/product-images/products/c0cdb2f5-16a5-45f2-9093-5295a61c83bb.jpg",
+        "whatsapp_message": null,
+        "created_at": "2026-01-27T21:13:37.208231+00:00",
+        "updated_at": "2026-01-27T21:13:37.208231+00:00",
+        "currency": "$"
+      }
+    ]
+  },
+  "profiles": {
+    "count": "0-0/1",
+    "rows": [
+      {
+        "id": "01b3e9b3-3cf5-47b7-b5f3-d7172dbe0cdc",
+        "user_id": "e44054a4-e44c-41a5-afd3-2582f46c0384",
+        "email": "support01trepremium@ahmivault.local",
+        "full_name": "support01trepremium",
+        "avatar_url": null,
+        "created_at": "2026-02-16T17:17:31.894964+00:00",
+        "updated_at": "2026-02-16T17:17:31.894964+00:00",
+        "username": "support01trepremium",
+        "telegram_id": null
+      }
+    ]
+  },
+  "promo_codes": {
+    "count": "0-2/3",
+    "rows": [
+      {
+        "id": "bbdcaccb-50b5-4f7d-ab4a-25681c9ebdf9",
+        "code": "PRO-AXV2026",
+        "duration_days": 90,
+        "is_active": true,
+        "max_uses": null,
+        "current_uses": 3371,
+        "created_at": "2026-01-10T16:17:12.055128+00:00",
+        "updated_at": "2026-02-16T18:29:24.520566+00:00",
+        "expires_at": "2026-04-10T00:00:00+00:00",
+        "created_by": null
+      },
+      {
+        "id": "696384ce-a2b4-4248-8f8c-1d78f6a9e705",
+        "code": "PRO-AHMITEST",
+        "duration_days": 1,
+        "is_active": true,
+        "max_uses": null,
+        "current_uses": 20,
+        "created_at": "2026-01-08T23:40:32.91084+00:00",
+        "updated_at": "2026-01-15T18:11:02.323001+00:00",
+        "expires_at": "2026-02-27T00:00:00+00:00",
+        "created_by": null
+      },
+      {
+        "id": "407b130c-a956-42a6-a59b-6d62a3ef3807",
+        "code": "PRO-VAULTVIP",
+        "duration_days": 90,
+        "is_active": true,
+        "max_uses": null,
+        "current_uses": 56,
+        "created_at": "2026-02-11T23:03:12.994614+00:00",
+        "updated_at": "2026-02-16T09:48:09.859485+00:00",
+        "expires_at": "2026-05-12T00:00:00+00:00",
+        "created_by": null
+      }
+    ]
+  },
+  "referrals": {
+    "count": "*/0",
+    "rows": []
+  },
+  "site_settings": {
+    "count": "0-1/2",
+    "rows": [
+      {
+        "id": "c2f7256c-e5e9-4c26-8ff3-4ff809472c75",
+        "setting_key": "vault_access_popup",
+        "setting_value": {
+          "title": "Wanna Join The VIP Channels",
+          "message": "🔥 AHMI VAULT VIP: UPDATED ACCESS LEVELS 🔥\nThe Vault has been reorganized to give you more control. Choose the access that fits your hustle—whether you just want the methods or the full power of our automated generation tools.\n\n🛠️ VIP Document Generator: Direct access to ahmivault.store to generate IDs/Docs instantly.💳 Private BINS: 🎓 Premium Library: Private paid courses and secret documents.👥 Better Community: Join an elite network of serious earners.\n\nNOTE: People are selling single methods for $50 to $100. Here, you get the entire library plus future updates for a fraction of the cost.",
+          "button_text": "Nah I Don't Want To Be VIP",
+          "show_telegram": true,
+          "show_whatsapp": false,
+          "telegram_username": "ahmivault"
+        },
+        "created_at": "2026-01-07T02:00:17.4911+00:00",
+        "updated_at": "2026-01-28T21:44:57.081379+00:00",
+        "is_public": true
+      },
+      {
+        "id": "af47fba1-8164-46b0-8328-490bb74fcf98",
+        "setting_key": "slip_usage_limits",
+        "setting_value": {
+          "download_limit": 18,
+          "randomize_limit": 25
+        },
+        "created_at": "2026-02-06T20:09:22.21647+00:00",
+        "updated_at": "2026-02-09T11:04:41.813779+00:00",
+        "is_public": true
+      }
+    ]
+  },
+  "testimonial_comments": {
+    "count": "0-0/1",
+    "rows": [
+      {
+        "id": "738fcb3e-00c3-4dec-b7e4-78869e97e5ca",
+        "testimonial_id": "2878c668-d96d-4cef-8c54-97a28d956dae",
+        "user_id": "1822f9d5-713d-4b35-83e0-8d5e3d6128bf",
+        "content": "Thankyou For the Kind Words Man",
+        "created_at": "2026-01-21T20:27:56.431948+00:00",
+        "updated_at": "2026-01-21T20:27:56.431948+00:00"
+      }
+    ]
+  },
+  "testimonial_reactions": {
+    "count": "0-14/15",
+    "rows": [
+      {
+        "id": "7dca9b78-2776-403a-800d-02491042e510",
+        "testimonial_id": "4fe30f31-2d19-4b7a-b7f0-081bea5e11af",
+        "user_id": "691eb403-15dd-4dd9-bb00-382fc02000e8",
+        "emoji": "🔥",
+        "created_at": "2026-01-19T20:07:42.155415+00:00"
+      },
+      {
+        "id": "45188723-7b04-4e3e-a35f-2c6c89156a62",
+        "testimonial_id": "4fe30f31-2d19-4b7a-b7f0-081bea5e11af",
+        "user_id": "b3da1cd9-5d84-4788-8121-c23abb509da6",
+        "emoji": "🔥",
+        "created_at": "2026-01-19T20:29:26.038454+00:00"
+      },
+      {
+        "id": "8d339629-50fa-442c-bbe0-370eb638d91c",
+        "testimonial_id": "4fe30f31-2d19-4b7a-b7f0-081bea5e11af",
+        "user_id": "d469c6ff-6b8f-4f86-a3ed-4420dc8e72b8",
+        "emoji": "🔥",
+        "created_at": "2026-01-19T22:17:46.136014+00:00"
+      },
+      {
+        "id": "8011f20e-6be0-486c-b7b1-e1095ee75668",
+        "testimonial_id": "2878c668-d96d-4cef-8c54-97a28d956dae",
+        "user_id": "1822f9d5-713d-4b35-83e0-8d5e3d6128bf",
+        "emoji": "🔥",
+        "created_at": "2026-01-21T20:44:42.442703+00:00"
+      },
+      {
+        "id": "2df5846f-81a9-439c-92a3-96573498c380",
+        "testimonial_id": "93234538-d746-450a-bfd5-aadc4b81b525",
+        "user_id": "1822f9d5-713d-4b35-83e0-8d5e3d6128bf",
+        "emoji": "🔥",
+        "created_at": "2026-01-21T20:44:44.390929+00:00"
+      },
+      {
+        "id": "bb65bc2a-0de9-49a0-ab57-46924012f256",
+        "testimonial_id": "4fe30f31-2d19-4b7a-b7f0-081bea5e11af",
+        "user_id": "1822f9d5-713d-4b35-83e0-8d5e3d6128bf",
+        "emoji": "🔥",
+        "created_at": "2026-01-21T20:44:45.669362+00:00"
+      },
+      {
+        "id": "9bb03306-3950-40b3-bded-2f271adca27d",
+        "testimonial_id": "4d4bac74-e36c-4984-890e-c76e1c0683f3",
+        "user_id": "c45f29bf-dfb3-4898-bb08-9770e094704a",
+        "emoji": "👑",
+        "created_at": "2026-01-27T19:57:37.997031+00:00"
+      },
+      {
+        "id": "e727751e-2e27-47f2-ab1d-bbb57c19fa91",
+        "testimonial_id": "4d4bac74-e36c-4984-890e-c76e1c0683f3",
+        "user_id": "1822f9d5-713d-4b35-83e0-8d5e3d6128bf",
+        "emoji": "🔥",
+        "created_at": "2026-01-27T21:23:41.609996+00:00"
+      },
+      {
+        "id": "90d9f6c1-f52f-430d-a9a2-7de5ce340b5b",
+        "testimonial_id": "2878c668-d96d-4cef-8c54-97a28d956dae",
+        "user_id": "30b96739-e4dd-4267-a986-4075fa779f5e",
+        "emoji": "👑",
+        "created_at": "2026-02-02T05:24:03.678998+00:00"
+      },
+      {
+        "id": "a661560d-76a7-4e99-96b7-55e49cb633d3",
+        "testimonial_id": "2878c668-d96d-4cef-8c54-97a28d956dae",
+        "user_id": "b7b3e42c-8eb5-4be9-8a4b-31a67056dca1",
+        "emoji": "👑",
+        "created_at": "2026-02-06T21:02:24.386304+00:00"
+      },
+      {
+        "id": "3d1a8f3b-70d8-4c3f-b3bc-291e66baa7a0",
+        "testimonial_id": "ef33f8ff-6071-4f1c-89c5-839fce591d3d",
+        "user_id": "b7b3e42c-8eb5-4be9-8a4b-31a67056dca1",
+        "emoji": "🔥",
+        "created_at": "2026-02-06T21:02:25.781365+00:00"
+      },
+      {
+        "id": "eb31b43b-dfdb-4b6f-889c-5a2903c5f745",
+        "testimonial_id": "ef33f8ff-6071-4f1c-89c5-839fce591d3d",
+        "user_id": "b7b3e42c-8eb5-4be9-8a4b-31a67056dca1",
+        "emoji": "💰",
+        "created_at": "2026-02-06T21:02:26.847983+00:00"
+      },
+      {
+        "id": "51ea4e76-6757-4d12-9cc1-a684eb85e709",
+        "testimonial_id": "ef33f8ff-6071-4f1c-89c5-839fce591d3d",
+        "user_id": "b7b3e42c-8eb5-4be9-8a4b-31a67056dca1",
+        "emoji": "🚀",
+        "created_at": "2026-02-06T21:02:29.757458+00:00"
+      },
+      {
+        "id": "68394dad-0319-406f-a122-5b4deccbabb1",
+        "testimonial_id": "ef33f8ff-6071-4f1c-89c5-839fce591d3d",
+        "user_id": "b7b3e42c-8eb5-4be9-8a4b-31a67056dca1",
+        "emoji": "💎",
+        "created_at": "2026-02-06T21:02:30.642753+00:00"
+      },
+      {
+        "id": "5be9ca2d-efea-4c3a-ba0e-ed5f407037cd",
+        "testimonial_id": "ef33f8ff-6071-4f1c-89c5-839fce591d3d",
+        "user_id": "b7b3e42c-8eb5-4be9-8a4b-31a67056dca1",
+        "emoji": "👑",
+        "created_at": "2026-02-06T21:02:31.912282+00:00"
+      }
+    ]
+  },
+  "user_roles": {
+    "count": "*/0",
+    "rows": []
+  },
+  "vault_items": {
+    "count": "*/0",
+    "rows": []
+  },
+  "vault_testimonials": {
+    "count": "0-4/5",
+    "rows": [
+      {
+        "id": "4fe30f31-2d19-4b7a-b7f0-081bea5e11af",
+        "user_id": "691eb403-15dd-4dd9-bb00-382fc02000e8",
+        "content": "Canva works fine",
+        "image_urls": [
+          "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/testimonial-images/691eb403-15dd-4dd9-bb00-382fc02000e8/1768853256084-ets0pp.png"
+        ],
+        "is_approved": true,
+        "is_featured": false,
+        "created_at": "2026-01-19T20:07:37.85386+00:00",
+        "updated_at": "2026-01-19T20:07:37.85386+00:00"
+      },
+      {
+        "id": "93234538-d746-450a-bfd5-aadc4b81b525",
+        "user_id": "b3da1cd9-5d84-4788-8121-c23abb509da6",
+        "content": "Tested and approved Canva Edu method 🔥",
+        "image_urls": [
+          "https://hbbourgxmrxtlgvacsjr.supabase.co/storage/v1/object/public/testimonial-images/b3da1cd9-5d84-4788-8121-c23abb509da6/1768854769123-bstwta.jpg"
+        ],
+        "is_approved": true,
+        "is_featured": false,
+        "created_at": "2026-01-19T20:32:51.425077+00:00",
+        "updated_at": "2026-01-29T18:12:19.282844+00:00"
+      },
+      {
+        "id": "2878c668-d96d-4cef-8c54-97a28d956dae",
+        "user_id": "487b7645-25f5-40b0-a75e-cfa101853533",
+        "content": "I honestly haven’t seen anyone operate at this level before. Your skills are exceptional — and it’s not just about the subscription price. I managed to make a profit the very same day!. Thank you",
+        "image_urls": [],
+        "is_approved": true,
+        "is_featured": true,
+        "created_at": "2026-01-21T20:23:24.526864+00:00",
+        "updated_at": "2026-01-29T18:12:20.351332+00:00"
+      },
+      {
+        "id": "4d4bac74-e36c-4984-890e-c76e1c0683f3",
+        "user_id": "c45f29bf-dfb3-4898-bb08-9770e094704a",
+        "content": "Many Great Methods for 30$\nBest price in Market \nNo one can beat the price or quality of methods \nI have made so much profit cannot even imagine \nBest 💕 Method Group\nJoin Before it gets too late",
+        "image_urls": [],
+        "is_approved": true,
+        "is_featured": true,
+        "created_at": "2026-01-27T19:57:23.202367+00:00",
+        "updated_at": "2026-01-29T18:12:22.58147+00:00"
+      },
+      {
+        "id": "ef33f8ff-6071-4f1c-89c5-839fce591d3d",
+        "user_id": "b7b3e42c-8eb5-4be9-8a4b-31a67056dca1",
+        "content": "I was worried about recovering the fee I paid, but within a week I made double the amount in profit and am still earning $10–$30 daily.",
+        "image_urls": [],
+        "is_approved": true,
+        "is_featured": false,
+        "created_at": "2026-02-06T21:01:57.658927+00:00",
+        "updated_at": "2026-02-06T21:01:57.658927+00:00"
+      }
+    ]
+  },
+  "vip_notifications": {
+    "count": "*/0",
+    "rows": []
+  },
+  "vip_pricing_content": {
+    "count": "0-4/5",
+    "rows": [
+      {
+        "id": "e450dd62-f2eb-4028-ae5a-1f7ba10b3ee0",
+        "content_key": "member_benefits",
+        "content_value": [
+          "Full access to all VIP-only methods and guides",
+          "Unlimited use of premium generators and tools",
+          "Access to private community channels",
+          "Early access to new features and content",
+          "Personal support from the team",
+          "Exclusive starter packs and resources",
+          "Premium account access (Spotify, YouTube, etc.)",
+          "Weekly live sessions and Q&A"
+        ],
+        "updated_at": "2026-01-20T22:21:34.363043+00:00",
+        "updated_by": null
+      },
+      {
+        "id": "c17233fc-3351-4aef-a214-ef2deeb898fa",
+        "content_key": "comparison_features",
+        "content_value": [
+          {
+            "vip": true,
+            "free": true,
+            "feature": "Basic Tools"
+          },
+          {
+            "vip": true,
+            "free": false,
+            "feature": "Elite Methods"
+          },
+          {
+            "vip": true,
+            "free": false,
+            "feature": "Premium Tools"
+          },
+          {
+            "vip": true,
+            "free": false,
+            "feature": "Daily Updates"
+          },
+          {
+            "vip": true,
+            "free": false,
+            "feature": "VIP Community"
+          },
+          {
+            "vip": true,
+            "free": false,
+            "feature": "Direct Support"
+          },
+          {
+            "vip": true,
+            "free": false,
+            "feature": "Premium Accounts"
+          },
+          {
+            "vip": true,
+            "free": false,
+            "feature": "Starter Packs"
+          }
+        ],
+        "updated_at": "2026-01-20T22:21:34.363043+00:00",
+        "updated_by": null
+      },
+      {
+        "id": "6dd58b43-17d9-408c-b30b-d69ccf5c8c56",
+        "content_key": "social_proof",
+        "content_value": {
+          "support_hours": "24/7",
+          "active_members": "100+",
+          "satisfaction_rate": "98%"
+        },
+        "updated_at": "2026-01-20T22:36:00.844919+00:00",
+        "updated_by": null
+      },
+      {
+        "id": "5c90a783-59bf-4b97-95e1-b533ca2a414a",
+        "content_key": "value_propositions",
+        "content_value": [
+          {
+            "icon": "Target",
+            "title": "Exclusive Methods",
+            "highlight": "50+ Rare Methods",
+            "description": "Battle-tested techniques that actually work, updated weekly with the latest finds."
+          },
+          {
+            "icon": "Sparkles",
+            "title": "Elite Tools",
+            "highlight": "100+ Tools",
+            "description": "Premium generators, checkers, and automation tools not available anywhere else."
+          },
+          {
+            "icon": "Gift",
+            "title": "Premium Subscriptions",
+            "highlight": "$500+ Value",
+            "description": "Access to Spotify, YouTube, Netflix, Canva Pro, and many more premium accounts."
+          },
+          {
+            "icon": "Database",
+            "title": "Massive Database",
+            "highlight": "100TB+ Data",
+            "description": "Over 100TB of premium data, resources, and exclusive content at your fingertips."
+          },
+          {
+            "icon": "RefreshCw",
+            "title": "Daily Updates",
+            "highlight": "24/7 Fresh",
+            "description": "Fresh content, new methods, and updated tools added every single day."
+          },
+          {
+            "icon": "Headphones",
+            "title": "Direct Support",
+            "highlight": "VIP Support",
+            "description": "Personal assistance from our team. Get help when you need it, not automated bots."
+          }
+        ],
+        "updated_at": "2026-01-20T22:36:45.499968+00:00",
+        "updated_by": null
+      },
+      {
+        "id": "13a06195-7060-4e98-8879-037018253d72",
+        "content_key": "faqs",
+        "content_value": [
+          {
+            "answer": "Your initial $25 payment gives you full access for 6 months. After the first month, it's just $5/month to maintain access. Renew for $25 every 6 months.",
+            "question": "How long does access last?"
+          },
+          {
+            "answer": "We accept Binance or crypto or pkr and various other payment methods. Contact us on Telegram for details.",
+            "question": "What payment methods are accepted?"
+          },
+          {
+            "answer": "Due to the digital nature of our content, refunds are handled case-by-case. We're confident you'll love the value you receive.",
+            "question": "Is there a refund policy?"
+          },
+          {
+            "answer": "VIP members get direct access to our support team via Telegram VIP Chat Support Channel. We respond quickly to all inquiries.",
+            "question": "How do I get support?"
+          }
+        ],
+        "updated_at": "2026-01-20T22:37:46.363766+00:00",
+        "updated_by": null
+      }
+    ]
+  },
+  "vip_subscription_history": {
+    "count": "*/0",
+    "rows": []
+  }
+}

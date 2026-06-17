@@ -1,0 +1,12 @@
+{
+  "accentColor": "#7c3aed",
+  "cssTheme": "",
+  "enabledCssSnippets": [],
+  "baseTheme": "adapt",
+  "interfaceFontFamily": "",
+  "textFontFamily": "",
+  "monospaceFontFamily": "Cascadia Code, Fira Code, JetBrains Mono",
+  "showViewHeader": true,
+  "translucency": false,
+  "nativeMenus": false
+}

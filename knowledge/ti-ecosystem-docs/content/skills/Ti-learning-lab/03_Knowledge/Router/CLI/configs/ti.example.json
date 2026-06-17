@@ -1,0 +1,42 @@
+{
+  "provider": "openrouter",
+  "model": "qwenvsclaude-3.6",
+  "log_level": "info",
+  "timeout_sec": 120,
+  "max_tokens": 8192,
+  "auth_files": [
+    "~/.ti/auth/.env"
+  ],
+  "cookie_file": "~/.ti/auth/cookies.json",
+  "cookie_profile": "sharedchat",
+  "cookie_domain": "chat.sharedchat.fun",
+  "cookie_api_primary": "https://chat.sharedchat.cc",
+  "cookie_api_fallback": "https://chat.sharedchat.fun",
+  "router_agent_url": "http://localhost:1806",
+  "compatible_providers": [
+    {
+      "name": "local-openai",
+      "type": "openai_compatible",
+      "base_url": "http://localhost:11434/v1",
+      "chat_path": "/chat/completions",
+      "api_key_env": "LOCAL_OPENAI_API_KEY",
+      "auth_header": "Authorization",
+      "auth_token_prefix": "Bearer",
+      "default_model": "llama3.1",
+      "models": ["llama3.1"],
+      "force_https": false
+    },
+    {
+      "name": "custom-cookie",
+      "type": "cookie_http",
+      "base_url": "https://example.internal/v1",
+      "chat_path": "/chat/completions",
+      "cookie_file": "~/.ti/auth/cookies.json",
+      "cookie_profile": "sharedchat",
+      "cookie_domain": "example.internal",
+      "default_model": "gpt-4o-mini",
+      "models": ["gpt-4o-mini"],
+      "force_https": true
+    }
+  ]
+}

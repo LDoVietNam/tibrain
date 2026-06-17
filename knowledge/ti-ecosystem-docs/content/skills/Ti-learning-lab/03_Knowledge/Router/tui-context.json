@@ -1,0 +1,401 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-05-04",
+  "project": "Ti TUI - Ti Platform Terminal UI",
+  "description": "Terminal UI component for managing the entire Ti ecosystem",
+  "root_path": "Z:\\10_WORKPLACE\\Ti\\apps\\tui\\",
+
+  "metadata": {
+    "version": "1.0.0",
+    "status": "Component của Ti Platform",
+    "module": "github.com/ti/agent-tui",
+    "binary": "Z:\\10_WORKPLACE\\Ti\\tui\\bin\\ti-tui.exe",
+    "architecture": "TUI Component riêng của Ti Platform (không merge vào Ti CLI)"
+  },
+
+  "ti_platform_architecture": {
+    "components": [
+      {
+        "name": "Ti CLI",
+        "role": "Interface 1",
+        "description": "Command-line interface"
+      },
+      {
+        "name": "Ti TUI",
+        "role": "Interface 2",
+        "description": "Terminal UI interface"
+      },
+      {
+        "name": "Ti Router",
+        "role": "Service",
+        "description": "Model routing service (port 1807)"
+      },
+      {
+        "name": "MCP Hub",
+        "role": "Service",
+        "description": "MCP servers (24+ tools)"
+      },
+      {
+        "name": "Ti Brain",
+        "role": "Component",
+        "description": "AI reasoning"
+      },
+      {
+        "name": "Automation",
+        "role": "Component",
+        "description": "Automation workflows"
+      },
+      {
+        "name": "Taskboard",
+        "role": "Component",
+        "description": "Task management"
+      },
+      {
+        "name": "Core",
+        "role": "Shared Library",
+        "description": "Shared contracts (JSON schemas)"
+      }
+    ]
+  },
+
+  "directory_structure": {
+    "cmd/tui": {
+      "main.go": "TUI entry point"
+    },
+    "internal": {
+      "ui": {
+        "description": "Bubble Tea TUI",
+        "files": [
+          "brain_tui.go - TiBrain Hub tab",
+          "router_tui.go - Router tab",
+          "mcp_tui.go - MCP tab",
+          "automation_tui.go - Automation tab",
+          "taskboard_tui.go - Taskboard tab",
+          "launcher.go - Launcher với 9 modules",
+          "cli_tui.go - CLI tab",
+          "agent_hub.go - Agent Hub tab",
+          "memory_tui.go - Memory tab",
+          "skills_tui.go - Skills tab"
+        ]
+      },
+      "integration": {
+        "description": "Ti platform integration",
+        "components": [
+          "tibrain - TiBrain integration (qua MCP)",
+          "router - Router integration (qua HTTP API)",
+          "mcp - MCP Hub integration (qua MCP client)",
+          "automation - Automation integration",
+          "taskboard - Taskboard integration",
+          "manager.go - Integration manager"
+        ]
+      },
+      "agent": "Multi-agent orchestration",
+      "persistence": "SQLite persistence",
+      "skills": "Skills integration",
+      "tools": "Tools integration",
+      "circuit": "Circuit breakers",
+      "api": "REST API",
+      "cli": "CLI integration",
+      "config": "Config management",
+      "windows": "Windows executor"
+    },
+    "go.mod": "Module: github.com/ti/agent-tui",
+    "bin": "ti-tui.exe - TUI binary"
+  },
+
+  "tui_modules": {
+    "cli": {
+      "number": 1,
+      "name": "CLI",
+      "features": [
+        "Direct terminal chat với Ti CLI",
+        "Execute Ti CLI commands",
+        "View CLI output"
+      ]
+    },
+    "agent_hub": {
+      "number": 2,
+      "name": "Agent Hub",
+      "features": [
+        "Multi-agent management dashboard",
+        "Agent orchestration",
+        "Cost tracking",
+        "Circuit breakers"
+      ]
+    },
+    "memory": {
+      "number": 3,
+      "name": "Memory",
+      "features": [
+        "Browse & search agent memory bank",
+        "Memory visualization",
+        "Memory management"
+      ]
+    },
+    "skills": {
+      "number": 4,
+      "name": "Skills",
+      "features": [
+        "Manage & invoke agent skill library",
+        "Skill discovery",
+        "Skill execution"
+      ]
+    },
+    "brain": {
+      "number": 5,
+      "name": "Brain",
+      "features": [
+        "TiBrain Hub management",
+        "Status Tab: View TiBrain Hub status",
+        "CLIs Tab: List registered CLIs",
+        "Handoffs Tab: View handoffs between CLIs",
+        "Skills Tab: Search skills in TiBrain registry"
+      ]
+    },
+    "router": {
+      "number": 6,
+      "name": "Router",
+      "features": [
+        "Ti Router management",
+        "Health Tab: View Router health status",
+        "Models Tab: List available models",
+        "Chat Tab: Chat completion interface"
+      ]
+    },
+    "mcp": {
+      "number": 7,
+      "name": "MCP",
+      "features": [
+        "MCP Servers management",
+        "Servers Tab: List MCP servers",
+        "Tools Tab: View tools per server",
+        "Execute Tab: Execute MCP tools"
+      ]
+    },
+    "automation": {
+      "number": 8,
+      "name": "Automation",
+      "features": [
+        "Ti Automation workflows",
+        "Workflows Tab: List automation workflows",
+        "Execute Tab: Execute workflows",
+        "Logs Tab: View execution logs"
+      ]
+    },
+    "taskboard": {
+      "number": 9,
+      "name": "Taskboard",
+      "features": [
+        "Taskboard/BEADS management",
+        "Beads Tab: View all beads",
+        "Filter Tab: Filter by agent/status",
+        "Stats Tab: View statistics"
+      ]
+    }
+  },
+
+  "ti_platform_integrations": {
+    "tibrain": {
+      "location": "internal/integration/tibrain/tibrain.go",
+      "method": "qua MCP",
+      "methods": ["GetStatus", "ListCLIs", "ListHandoffs", "RecallHandoff", "SearchSkills", "ExecuteTool", "LogUsage"],
+      "status": "Interface defined (MCP client cần implement)"
+    },
+    "router": {
+      "location": "internal/integration/router/router.go",
+      "method": "qua HTTP API",
+      "methods": ["GetHealth", "ListModels", "ChatCompletion"],
+      "status": "Fully implemented với HTTP client"
+    },
+    "mcp_hub": {
+      "location": "internal/integration/mcp/mcp.go",
+      "method": "qua MCP Client",
+      "methods": ["ListServers", "ListTools", "ExecuteTool"],
+      "status": "Interface defined (MCP client cần implement)"
+    },
+    "automation": {
+      "location": "internal/integration/automation/automation.go",
+      "methods": ["ListWorkflows", "ExecuteWorkflow"],
+      "status": "Implemented với file system integration"
+    },
+    "taskboard": {
+      "location": "internal/integration/taskboard/taskboard.go",
+      "methods": ["ReadBeads", "FilterBeadsByStatus", "FilterBeadsByAgent"],
+      "status": "Implemented với beads.md parsing"
+    }
+  },
+
+  "keyboard_shortcuts": {
+    "launcher": {
+      "↑/↓": "Navigate modules",
+      "1-9": "Select module",
+      "Enter": "Launch selected module",
+      "Ctrl+C / Q": "Quit"
+    },
+    "brain_tab": {
+      "1-4": "Switch tabs (Status, CLIs, Handoffs, Skills)",
+      "↑/↓": "Navigate items",
+      "R": "Refresh current tab",
+      "Ctrl+\\ / Esc": "Return to launcher"
+    },
+    "router_tab": {
+      "1-3": "Switch tabs (Health, Models, Chat)",
+      "↑/↓": "Navigate items",
+      "R": "Refresh current tab",
+      "Ctrl+\\ / Esc": "Return to launcher"
+    },
+    "mcp_tab": {
+      "1-3": "Switch tabs (Servers, Tools, Execute)",
+      "↑/↓": "Navigate items",
+      "R": "Refresh current tab",
+      "Enter": "Select/Execute",
+      "Ctrl+\\ / Esc": "Return to launcher"
+    },
+    "automation_tab": {
+      "1-3": "Switch tabs (Workflows, Execute, Logs)",
+      "↑/↓": "Navigate items",
+      "R": "Refresh current tab",
+      "Enter": "Select/Execute",
+      "Ctrl+\\ / Esc": "Return to launcher"
+    },
+    "taskboard_tab": {
+      "1-3": "Switch tabs (Beads, Filter, Stats)",
+      "↑/↓": "Navigate items",
+      "R": "Refresh current tab",
+      "Enter": "Apply Filter",
+      "Ctrl+\\ / Esc": "Return to launcher"
+    }
+  },
+
+  "architecture_principles": {
+    "ti_platform": {
+      "description": "Platform Chính",
+      "principles": [
+        "TUI là component riêng của Ti platform",
+        "Không phụ thuộc vào Ti CLI",
+        "Có binary riêng (ti-tui.exe)",
+        "Integrate với các components khác qua đúng interfaces"
+      ]
+    },
+    "ti_cli": {
+      "description": "Interface Riêng",
+      "principles": [
+        "Chỉ là CLI interface",
+        "Không chứa TUI",
+        "Build riêng, deploy riêng"
+      ]
+    },
+    "ti_router": {
+      "description": "Service Riêng",
+      "principles": [
+        "Service độc lập với binary riêng (routerd.exe)",
+        "TUI integrate qua HTTP API (http://localhost:1807)",
+        "Không merge code"
+      ]
+    },
+    "mcp_hub": {
+      "description": "Central Hub",
+      "principles": [
+        "Central MCP servers với 4 servers",
+        "TUI integrate qua MCP client",
+        "Không duplicate MCP functionality"
+      ]
+    },
+    "ti_core": {
+      "description": "Shared Contracts",
+      "principles": [
+        "JSON schemas cho shared contracts",
+        "Không phải Go library",
+        "TUI sử dụng schemas cho validation"
+      ]
+    }
+  },
+
+  "build_status": {
+    "module": "github.com/ti/agent-tui",
+    "build": "Successful",
+    "binary": "Z:\\10_WORKPLACE\\Ti\\tui\\bin\\ti-tui.exe",
+    "test": "Running successfully"
+  },
+
+  "implementation_phases": {
+    "phase_1_core_functionality": {
+      "status": "Completed",
+      "features": [
+        "Input handling cho tất cả tabs (Router Chat, MCP Execute, Automation Execute, Taskboard Filter)",
+        "MCP Client implementation (stdio + HTTP transport, tool execution logic)",
+        "Server discovery và listing"
+      ]
+    },
+    "phase_2_robustness": {
+      "status": "Completed",
+      "features": [
+        "Error handling cho tất cả integration calls",
+        "Nil checks cho API responses",
+        "Error display trong TUI"
+      ]
+    },
+    "phase_3_testing": {
+      "status": "Completed",
+      "features": [
+        "Build verification",
+        "Integration interfaces updated"
+      ]
+    },
+    "phase_4_optimizations": {
+      "status": "Completed",
+      "features": [
+        "Real-time updates (auto-refresh)",
+        "Router health: 10s",
+        "MCP servers: 15s",
+        "Taskboard beads: 20s",
+        "Enhanced progress indicators (context-aware loading messages)",
+        "Color coding cho status messages",
+        "Green: healthy/running/active/ok",
+        "Red: errors",
+        "Yellow: warnings",
+        "Better UX (color-coded stats in Taskboard)"
+      ]
+    }
+  },
+
+  "implemented_features": [
+    "Text input components (github.com/charmbracelet/bubbles/textinput)",
+    "MCP stdio transport",
+    "MCP HTTP transport",
+    "MCP client với JSON-RPC protocol",
+    "Error handling wrappers",
+    "Nil checks",
+    "Auto-refresh timers",
+    "Context-aware progress indicators",
+    "Color-coded status messages"
+  ],
+
+  "usage": {
+    "start_tui": "cd Z:\\10_WORKPLACE\\Ti\\tui && ./bin/ti-tui.exe",
+    "custom_config": "TI_TUI_CLI_PATH=/usr/local/ti ./bin/ti-tui.exe"
+  },
+
+  "documentation": {
+    "main_readme": "README.md",
+    "plan": "PLAN.md",
+    "ui_plan": "UI_PLAN.md",
+    "canvas_preview": "canvas-preview/README.md",
+    "docs": {
+      "API.md": "API documentation",
+      "ARCHITECTURE.md": "Architecture documentation",
+      "DATA_FLOW.md": "Data flow documentation",
+      "DEVELOPMENT.md": "Development guide",
+      "IMPLEMENTATION.md": "Implementation details",
+      "INDEX.md": "Documentation index"
+    }
+  },
+
+  "quick_reference": {
+    "total_modules": 9,
+    "main_binary": "bin/ti-tui.exe",
+    "tui_framework": "Bubble Tea",
+    "integrations": ["TiBrain", "Router", "MCP Hub", "Automation", "Taskboard"],
+    "build_status": "All phases completed"
+  }
+}

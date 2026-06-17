@@ -1,0 +1,16 @@
+{
+  "blocks": {
+    "enabled": true,
+    "store": "~/.ti/data/blocks",
+    "record": {
+      "sandbox_run": true,
+      "tool_run": true,
+      "translate_convert": true,
+      "agent_run": true
+    },
+    "output": {
+      "max_artifact_bytes": 2000000,
+      "export_format": "markdown"
+    }
+  }
+}
