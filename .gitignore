@@ -13,6 +13,13 @@
 /__pycache__/
 # Skip bundled internet content (VS Code Antigravity extension, MCP servers)
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Antigravity/**
+# Skip provider cookie docs (contain hardcoded API tokens)
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/CookieProviders/
+# Skip broader Router knowledge dir (also contains API keys in *.md)
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/
+# Skip entire 03_Knowledge (provider integration docs w/ API keys)
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Cursor-Trial-Hub/
 
 # Allowlist: special files
 !Makefile

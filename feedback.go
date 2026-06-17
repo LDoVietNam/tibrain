@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -52,22 +54,37 @@ func (r *RAGSystemManager) updateRoutingFeedback(queryID string, rating int) {
 	}
 }
 
-// GetFeedbackStats returns aggregated feedback metrics
-func (r *RAGSystemManager) GetFeedbackStats() map[string]interface{} {
-	var total, positive, avgRating float64
-	row := r.hub.db.QueryRow(`
+// GetFeedbackStats returns aggregated feedback metrics.
+// Returns an error if the DB scan fails (was previously silently swallowed,
+// returning a map of zeros that looked like real data).
+func (r *RAGSystemManager) GetFeedbackStats() (map[string]interface{}, error) {
+	var total, positive float64
+	var avgRating sql.NullFloat64
+	err := r.hub.db.QueryRow(`
 		SELECT COUNT(*), COUNT(CASE WHEN rating >= 3 THEN 1 END), AVG(rating)
 		FROM rag_feedback
-	`)
-	row.Scan(&total, &positive, &avgRating)
-
-	return map[string]interface{}{
-		"total_feedback": total,
-		"positive_count": positive,
-		"negative_count": total - positive,
-		"average_rating": avgRating,
-		"positive_rate":  positive / total * 100,
+	`).Scan(&total, &positive, &avgRating)
+	if err != nil {
+		return nil, fmt.Errorf("scan feedback stats: %w", err)
 	}
+
+	stats := map[string]interface{}{
+		"total_feedback": int(total),
+		"positive_count": int(positive),
+		"negative_count": int(total - positive),
+	}
+	if avgRating.Valid {
+		stats["average_rating"] = avgRating.Float64
+	} else {
+		stats["average_rating"] = 0.0
+	}
+	// Guard against division-by-zero: 0 feedbacks → 0% rate (not NaN).
+	if total > 0 {
+		stats["positive_rate"] = positive / total * 100
+	} else {
+		stats["positive_rate"] = 0.0
+	}
+	return stats, nil
 }
 
 // feedbackHandler handles POST /api/rag/feedback
@@ -92,3 +109,6 @@ func (s *APIServer) feedbackHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "submitted"})
 }
+
+// ensure errors import is used (keep goimports happy if file evolves)
+var _ = errors.New
