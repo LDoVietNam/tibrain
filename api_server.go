@@ -106,6 +106,11 @@ func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/api/docs/search", s.docsSearchHandler)
 	s.router.HandleFunc("/api/docs/status", s.docsStatusHandler)
 
+	// Browser Runtime Extension endpoints
+	s.router.HandleFunc("/api/browser-runtime/register", s.browserRuntimeRegisterHandler)
+	s.router.HandleFunc("/api/browser-runtime/tasks", s.browserRuntimeTasksHandler)
+	s.router.HandleFunc("/api/browser-runtime/tasks/stream", s.browserRuntimeTasksStreamHandler)
+
 	// v1 API endpoints for Open-WebUI integration
 	s.router.HandleFunc("/api/v1/rag/query", s.v1RagQueryHandler)
 	s.router.HandleFunc("/api/v1/knowledge/documents", s.v1KnowledgeDocumentsHandler)
@@ -1810,4 +1815,98 @@ func (s *APIServer) docsStatusHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(response)
+}
+
+// browserRuntimeRegisterHandler handles browser extension registration
+func (s *APIServer) browserRuntimeRegisterHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	var req struct {
+		ExtensionID  string   `json:"extension_id"`
+		TabID        string   `json:"tab_id"`
+		URL          string   `json:"url"`
+		Model        string   `json:"model"` // ChatGPT, Claude, DeepSeek
+		Capabilities []string `json:"capabilities"`
+	}
+
+	if r.Method == http.MethodOptions {
+		w.WriteHeader(http.StatusOK)
+		return
+	}
+
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.ExtensionID == "" {
+		http.Error(w, "extension_id required", http.StatusBadRequest)
+		return
+	}
+
+	response := map[string]interface{}{
+		"status":       "registered",
+		"extension_id": req.ExtensionID,
+		"tab_id":       req.TabID,
+		"url":          req.URL,
+		"model":        req.Model,
+		"timestamp":    time.Now(),
+		"note":         "Browser extension agent registered. Ready for task dispatch.",
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
+// browserRuntimeTasksHandler handles task queue management
+func (s *APIServer) browserRuntimeTasksHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	action := r.URL.Query().Get("action")
+
+	switch action {
+	case "list":
+		// Placeholder: return empty task list
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"tasks":     []interface{}{},
+			"count":     0,
+			"timestamp": time.Now(),
+		})
+	case "create":
+		// Placeholder: create task
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"status":    "created",
+			"task_id":   fmt.Sprintf("task_%d", time.Now().UnixNano()),
+			"timestamp": time.Now(),
+		})
+	default:
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"tasks":             []interface{}{},
+			"count":             0,
+			"available_actions": []string{"list", "create"},
+			"timestamp":         time.Now(),
+		})
+	}
+}
+
+// browserRuntimeTasksStreamHandler handles SSE stream for tasks
+func (s *APIServer) browserRuntimeTasksStreamHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	// Placeholder: send initial ready signal
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		return
+	}
+
+	fmt.Fprintf(w, "data: {\"status\":\"ready\",\"message\":\"Browser runtime SSE endpoint ready\"}\n\n")
+	flusher.Flush()
 }

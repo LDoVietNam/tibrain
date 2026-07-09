@@ -18,14 +18,12 @@ const (
 	RouteRouterBrain RetrievalRoute = "router_brain" // Merged: uses same local RAG
 	RouteHybrid      RetrievalRoute = "hybrid"
 	RouteBoth        RetrievalRoute = "both"
-	RouteGraph       RetrievalRoute = "graph" // Neo4j graph-based queries
 )
 
 // RetrievalRouter handles intelligent query routing within unified Ti Brain
 type RetrievalRouter struct {
 	hub             *Hub
 	ragManager      *RAGSystemManager
-	graphStore      *Neo4jGraphStore
 	routerRules     []RetrievalRouterRoutingRule
 	learningEnabled bool
 }
@@ -92,29 +90,10 @@ func NewRetrievalRouter(hub *Hub) *RetrievalRouter {
 	return router
 }
 
-// NewRetrievalRouterWithGraph creates a retrieval router with Neo4j graph support
-func NewRetrievalRouterWithGraph(hub *Hub, graphStore *Neo4jGraphStore) *RetrievalRouter {
-	router := &RetrievalRouter{
-		hub:        hub,
-		ragManager: NewRAGSystemManager(hub),
-		graphStore: graphStore,
-		learningEnabled: true,
-	}
-
-	router.initializeRoutingRules()
-	return router
-}
 
 // initializeRoutingRules sets up the default routing rules
 func (rr *RetrievalRouter) initializeRoutingRules() {
 	rr.routerRules = []RetrievalRouterRoutingRule{
-		{
-			Name:        "Graph relationship queries",
-			Pattern:     "(?i)(relationship|entity|connected|linked|related|graph|neo4j)",
-			Priority:    1,
-			Route:       RouteGraph,
-			Description: "Queries about entity relationships and graph traversal",
-		},
 		{
 			Name:        "Router-specific queries",
 			Pattern:     "(?i)(router|routing|agent.*brain|multi.*cli|handoff|coordination)",
@@ -235,24 +214,6 @@ func (rr *RetrievalRouter) ExecuteRouteWithFilters(ctx context.Context, query st
 	}
 
 	switch decision.Route {
-	case RouteGraph:
-		result, err := rr.executeGraph(ctx, query)
-		if err != nil {
-			// Fallback to global RAG if graph fails
-			fallback, fallbackErr := rr.executeGlobalRAG(ctx, query, scopes, contextSrc, metadataFilters)
-			if fallbackErr != nil {
-				response.Error = fmt.Sprintf("graph search failed: %v; global RAG fallback failed: %v", err, fallbackErr)
-				response.Success = false
-				return response, err
-			}
-			response.Route = RouteGlobalRAG
-			response.Metadata["fallback_from"] = string(RouteGraph)
-			response.Metadata["fallback_error"] = err.Error()
-			response.mergeFromGlobalRAG(fallback)
-			break
-		}
-		response.mergeFromGraph(result)
-
 	case RouteGlobalRAG:
 		result, err := rr.executeGlobalRAG(ctx, query, scopes, contextSrc, metadataFilters)
 		if err != nil {
@@ -384,62 +345,6 @@ func (rr *RetrievalRouter) executeRouterBrain(ctx context.Context, query string,
 	return rr.executeGlobalRAG(ctx, routerQuery, scopes, contextSrc, metadataFilters)
 }
 
-// executeGraph executes query against Neo4j graph store
-func (rr *RetrievalRouter) executeGraph(ctx context.Context, query string) (*StandardizedRAGResponse, error) {
-	if rr.graphStore == nil {
-		return nil, fmt.Errorf("graph store not initialized")
-	}
-
-	graphResults, err := rr.graphStore.SearchGraph(ctx, query, 2)
-	if err != nil {
-		return nil, fmt.Errorf("graph search failed: %w", err)
-	}
-
-	response := &StandardizedRAGResponse{
-		Query:    query,
-		Route:    RouteGraph,
-		Timestamp: time.Now(),
-		Metadata: make(map[string]interface{}),
-	}
-
-	// Convert graph results to standardized format
-	for _, result := range graphResults {
-		for _, node := range result.Nodes {
-			response.Results = append(response.Results, StandardizedResult{
-				Content: fmt.Sprintf("%v", node.Properties),
-				Score:   result.Score,
-				Source:  string(RouteGraph),
-				Metadata: map[string]interface{}{
-					"id":     node.ID,
-					"labels": node.Labels,
-					"type":   "node",
-				},
-			})
-		}
-		for _, rel := range result.Relationships {
-			response.Results = append(response.Results, StandardizedResult{
-				Content: fmt.Sprintf("%s -> %s (%s)", rel.StartNode, rel.EndNode, rel.Type),
-				Score:   result.Score,
-				Source:  string(RouteGraph),
-				Metadata: map[string]interface{}{
-					"id":        rel.ID,
-					"type":      "relationship",
-					"rel_type":  rel.Type,
-				},
-			})
-		}
-	}
-
-	if len(response.Results) > 0 {
-		response.Success = true
-		response.Confidence = 0.8
-	} else {
-		response.Success = true
-		response.Confidence = 0.1
-	}
-
-	return response, nil
-}
 
 // mergeFromGlobalRAG merges global RAG results
 func (r *StandardizedRAGResponse) mergeFromGlobalRAG(other *StandardizedRAGResponse) {
@@ -461,15 +366,6 @@ func (r *StandardizedRAGResponse) mergeFromRouterBrain(other *StandardizedRAGRes
 	}
 }
 
-// mergeFromGraph merges Neo4j graph results
-func (r *StandardizedRAGResponse) mergeFromGraph(other *StandardizedRAGResponse) {
-	r.Results = other.Results
-	r.Confidence = other.Confidence
-	r.Success = other.Success
-	if other.Metadata != nil {
-		r.Metadata["graph_info"] = other.Metadata
-	}
-}
 
 // mergeHybrid merges results from both sources with hybrid logic
 func (r *StandardizedRAGResponse) mergeHybrid(global, router *StandardizedRAGResponse, globalErr, routerErr error) {

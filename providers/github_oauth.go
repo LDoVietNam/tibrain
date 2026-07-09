@@ -84,11 +84,11 @@ func (g *GithubOAuth) GetDeviceCode() (*GithubDeviceCodeRes, error) {
 
 func (g *GithubOAuth) PollLoginStatus(deviceCode string, interval int) (string, error) {
 	url := "https://github.com/login/oauth/access_token"
-	
+
 	if interval <= 0 {
 		interval = 5
 	}
-	
+
 	// Poll for up to 5 minutes (60 attempts * 5s)
 	maxAttempts := 60
 	for i := 0; i < maxAttempts; i++ {

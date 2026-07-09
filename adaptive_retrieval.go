@@ -12,61 +12,61 @@ import (
 )
 
 type RAGRuntimeTrace struct {
-	Mode                string           `json:"mode"`
-	CacheHit            bool             `json:"cache_hit"`
-	Verified            bool             `json:"verified"`
-	UsedSlowPath        bool             `json:"used_slow_path"`
-	FastCandidates      int              `json:"fast_candidates"`
-	SlowCandidates      int              `json:"slow_candidates"`
-	SelectedDocuments   int              `json:"selected_documents"`
-	ConfidenceScore     float64          `json:"confidence_score"`
-	GroundednessScore   float64          `json:"groundedness_score"`
-	CoverageScore       float64          `json:"coverage_score"`
-	QualityScore        float64          `json:"quality_score"`
-	DistilledCandidateID string          `json:"distilled_candidate_id,omitempty"`
-	StageDurationsMs    map[string]int64 `json:"stage_durations_ms,omitempty"`
+	Mode                 string           `json:"mode"`
+	CacheHit             bool             `json:"cache_hit"`
+	Verified             bool             `json:"verified"`
+	UsedSlowPath         bool             `json:"used_slow_path"`
+	FastCandidates       int              `json:"fast_candidates"`
+	SlowCandidates       int              `json:"slow_candidates"`
+	SelectedDocuments    int              `json:"selected_documents"`
+	ConfidenceScore      float64          `json:"confidence_score"`
+	GroundednessScore    float64          `json:"groundedness_score"`
+	CoverageScore        float64          `json:"coverage_score"`
+	QualityScore         float64          `json:"quality_score"`
+	DistilledCandidateID string           `json:"distilled_candidate_id,omitempty"`
+	StageDurationsMs     map[string]int64 `json:"stage_durations_ms,omitempty"`
 }
 
 type BrainPatternCandidate struct {
-	ID         string     `json:"id"`
-	QueryID    string     `json:"query_id"`
-	Title      string     `json:"title"`
-	Summary    string     `json:"summary"`
-	PatternBody string    `json:"pattern_body"`
-	Evidence   string     `json:"evidence"`
-	Score      float64    `json:"score"`
-	Status     string     `json:"status"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	PromotedAt *time.Time `json:"promoted_at,omitempty"`
+	ID          string     `json:"id"`
+	QueryID     string     `json:"query_id"`
+	Title       string     `json:"title"`
+	Summary     string     `json:"summary"`
+	PatternBody string     `json:"pattern_body"`
+	Evidence    string     `json:"evidence"`
+	Score       float64    `json:"score"`
+	Status      string     `json:"status"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
+	PromotedAt  *time.Time `json:"promoted_at,omitempty"`
 }
 
 type RuntimeTraceRecord struct {
-	ID                  string           `json:"id"`
-	QueryID             string           `json:"query_id"`
-	QueryText           string           `json:"query_text"`
-	Mode                string           `json:"mode"`
-	CacheHit            bool             `json:"cache_hit"`
-	Verified            bool             `json:"verified"`
-	UsedSlowPath        bool             `json:"used_slow_path"`
-	ConfidenceScore     float64          `json:"confidence_score"`
-	GroundednessScore   float64          `json:"groundedness_score"`
-	CoverageScore       float64          `json:"coverage_score"`
-	QualityScore        float64          `json:"quality_score"`
-	FastCandidates      int              `json:"fast_candidates"`
-	SlowCandidates      int              `json:"slow_candidates"`
-	SelectedDocuments   int              `json:"selected_documents"`
-	DistilledCandidateID string          `json:"distilled_candidate_id,omitempty"`
-	StageDurationsMs    map[string]int64 `json:"stage_durations_ms,omitempty"`
-	CreatedAt           time.Time        `json:"created_at"`
+	ID                   string           `json:"id"`
+	QueryID              string           `json:"query_id"`
+	QueryText            string           `json:"query_text"`
+	Mode                 string           `json:"mode"`
+	CacheHit             bool             `json:"cache_hit"`
+	Verified             bool             `json:"verified"`
+	UsedSlowPath         bool             `json:"used_slow_path"`
+	ConfidenceScore      float64          `json:"confidence_score"`
+	GroundednessScore    float64          `json:"groundedness_score"`
+	CoverageScore        float64          `json:"coverage_score"`
+	QualityScore         float64          `json:"quality_score"`
+	FastCandidates       int              `json:"fast_candidates"`
+	SlowCandidates       int              `json:"slow_candidates"`
+	SelectedDocuments    int              `json:"selected_documents"`
+	DistilledCandidateID string           `json:"distilled_candidate_id,omitempty"`
+	StageDurationsMs     map[string]int64 `json:"stage_durations_ms,omitempty"`
+	CreatedAt            time.Time        `json:"created_at"`
 }
 
 type retrievalCandidate struct {
-	Doc           RAGDocument
-	VectorScore   float64
-	LexicalScore  float64
+	Doc            RAGDocument
+	VectorScore    float64
+	LexicalScore   float64
 	FreshnessScore float64
-	FinalScore    float64
+	FinalScore     float64
 }
 
 type AdaptiveRetrievalRuntime struct {
@@ -406,7 +406,7 @@ func (r *RAGSystemManager) logRuntimeTrace(queryText string, result *RAGQuery) {
 		return
 	}
 	metadata, _ := json.Marshal(map[string]interface{}{
-		"stage_durations_ms":    result.Runtime.StageDurationsMs,
+		"stage_durations_ms":     result.Runtime.StageDurationsMs,
 		"distilled_candidate_id": result.Runtime.DistilledCandidateID,
 	})
 	r.hub.asyncWriter.Enqueue(`

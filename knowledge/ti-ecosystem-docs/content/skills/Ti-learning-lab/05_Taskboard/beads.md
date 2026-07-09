@@ -5,6 +5,40 @@
 
 ---
 
+## [2026-07-10T00:04:00+07:00] Integrate claude-nim into CLIProxyAPI Gateway - codex - DONE
+
+**Agent**: codex
+**Project**: apps/Tirouter, apps/tibrain
+**Status**: DONE
+
+**Actions Performed:**
+- Moved claude-nim to apps/Tirouter/claude-nim
+- Integrated claude-nim into CLIProxyAPI/config.yaml as claude-api-key provider (nim-sonnet, nim-deepseek-r1, nim-llama-3-3-70b)
+- Changed CLIProxyAPI port from 1810 to 1807 to resolve conflict with TiBrain control-plane
+- Created SERVICE_REGISTRY.md at workspace root apps/
+- Updated AGENTS.md in apps/ and apps\tibrain to reference registry
+- Updated SERVICE_REGISTRY.md port map aligned with root AGENTS.md (1817/1807)
+- Added registry reference to mcp-context.json
+
+**Files Created/Modified:**
+- Z:\01_PROJECTS\apps\SERVICE_REGISTRY.md (created)
+- Z:\01_PROJECTS\apps\Tirouter\CLIProxyAPI\config.yaml (ports, providers)
+- Z:\01_PROJECTS\apps\Tirouter\AGENTS.md (registry reference)
+- Z:\01_PROJECTS\apps\tibrain\AGENTS.md (registry reference)
+- Z:\01_PROJECTS\apps\tibrain\knowledge\ti-ecosystem-docs\content\skills\Ti-learning-lab\03_Knowledge\Router\mcp-context.json (registry section)
+- Z:\beads.md (workflow guide)
+
+**Next Steps:**
+- [ ] Start all services and verify health endpoints
+- [ ] Test NVIDIA NIM model calls via Tirouter Gateway
+
+**Ports Configured:**
+- 1817 (Production Proxy) → 1807 (Dev Gateway)
+- 1810 (TiBrain Control-Plane) - no overlap
+- 3456 (claude-nim NVIDIA NIM)
+
+---
+
 ## [2026-04-30T10:50:00+07:00] Priority 3 improvements + 10/10 goal - claude - DONE
 
 **Agent**: claude

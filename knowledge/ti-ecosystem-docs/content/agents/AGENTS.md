@@ -130,6 +130,24 @@ Ti/
 
 ---
 
+## 🧠 Agent Identity Protocol
+
+### Unified Identity with Trace Metadata
+- **Primary Identity**: `tibrain` (system identity)
+- **Trace Metadata**: Luôn ghi thêm trong beads/log để debug:
+
+```markdown
+**Agent**: tibrain
+**Model**: claude-3.5-sonnet | gemini-2.5-flash | qwen-3-coder
+**CLI**: codex | kilo-cli | opencode
+**Session**: {session_id}
+```
+
+### Debug Trace Chain
+- Mỗi beads entry chứa Model + CLI để trace nguồn gốc
+- Handoff metadata chuyển đầy đủ context từ agent trước
+- Git history + shell logs là backup trace cuối cùng
+
 ## 🤖 Agent Integration Guide
 
 ### Supported Agents
@@ -397,7 +415,27 @@ cat "ecosystem-docs/README.md"
 
 ---
 
-## 🧠 Agent-Specific Brain Roles
+## 🧠 Agent Identity Protocol
+
+### Identity Convention
+- **All agents operating under Z:\01_PROJECTS\apps\tibrain SHALL identify as "tibrain" in all logs, outputs, and communications**
+- Individual model/CLI identity is secondary - primary identity is **TiBrain system**
+- Output format: Always use `TiBrain:` prefix for system messages
+- File logs: Use unified `tibrain.log` format, not model-specific names
+
+### Unified Identity Behavior
+```markdown
+# Log format - all agents use this
+**Agent**: tibrain (unified identity)
+**Component**: {specific_component}
+**Project**: apps/tibrain
+**Status**: {DONE|BLOCKED|NEXT}
+```
+
+### Session Marker
+- Agents add `..` delimiter at end of significant outputs
+- Beads entries use unified format regardless of underlying model
+- All cross-session communication uses tibrain identity
 
 ### 🧠 Claude - Ti Brain Central Coordinator
 |- **Primary Role**: Ti Brain Central Intelligence Hub - Điều phối tổng thể

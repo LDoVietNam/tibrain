@@ -15,12 +15,19 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-// AutoLearningMechanism provides automatic learning from user interactions
 type AutoLearningMechanism struct {
 	db              *sql.DB
 	learningEngine  *LearningEngine
 	queryAnalyzer   *QueryAnalyzer
 	contentAnalyzer *ContentAnalyzer
+	interactionChan chan interactionTask
+}
+
+type interactionTask struct {
+	query        string
+	responseTime float64
+	success      bool
+	userFeedback int
 }
 
 // LearningEngine handles the core learning algorithms
@@ -63,6 +70,12 @@ func NewAutoLearningMechanism(dbPath string) (*AutoLearningMechanism, error) {
 		return nil, fmt.Errorf("failed to open database: %v", err)
 	}
 
+	// Enable WAL mode for better concurrency
+	_, err = db.Exec("PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA busy_timeout=5000;")
+	if err != nil {
+		return nil, fmt.Errorf("failed to set PRAGMA: %v", err)
+	}
+
 	learningEngine := &LearningEngine{
 		learningRate:     0.01,
 		decayFactor:      0.95,
@@ -85,12 +98,18 @@ func NewAutoLearningMechanism(dbPath string) (*AutoLearningMechanism, error) {
 		recommendations: []ContentRecommendation{},
 	}
 
-	return &AutoLearningMechanism{
+	alm := &AutoLearningMechanism{
 		db:              db,
 		learningEngine:  learningEngine,
 		queryAnalyzer:   queryAnalyzer,
 		contentAnalyzer: contentAnalyzer,
-	}, nil
+		interactionChan: make(chan interactionTask, 1000), // Buffer 1000 interactions
+	}
+
+	// Start the background worker for batch inserts
+	go alm.interactionWorker()
+
+	return alm, nil
 }
 
 // InitializeAutoLearning sets up the auto-learning system
@@ -539,18 +558,22 @@ func (alm *AutoLearningMechanism) setupContinuousLearning() error {
 
 // ProcessUserInteraction processes user interactions for learning
 func (alm *AutoLearningMechanism) ProcessUserInteraction(query string, responseTime float64, success bool, userFeedback int) error {
-	fmt.Println("👤 Processing user interaction...")
-
-	// Store interaction
-	_, err := alm.db.Exec(`
-		INSERT INTO user_interactions (query, response_time, success, user_feedback)
-		VALUES (?, ?, ?, ?)
-	`, query, responseTime, success, userFeedback)
-	if err != nil {
-		return err
+	// Push to the channel instead of inserting directly to prevent DB locking
+	select {
+	case alm.interactionChan <- interactionTask{
+		query:        query,
+		responseTime: responseTime,
+		success:      success,
+		userFeedback: userFeedback,
+	}:
+		// Successfully queued
+	default:
+		// Queue is full, drop or log (graceful degradation)
+		fmt.Println("⚠️ Interaction queue is full, dropping log to prevent block")
 	}
 
-	// Update query patterns
+	// Update query patterns (we can keep these synchronous for now or also batch them,
+	// but the heavy insert into user_interactions is now asynchronous).
 	pattern := alm.extractQueryPattern(query)
 	if pattern != "" {
 		alm.updateQueryPattern(pattern, responseTime, success)
@@ -560,6 +583,65 @@ func (alm *AutoLearningMechanism) ProcessUserInteraction(query string, responseT
 	alm.updateLearningMetrics(query, responseTime, success, userFeedback)
 
 	return nil
+}
+
+// interactionWorker runs in the background and batches inserts to user_interactions
+func (alm *AutoLearningMechanism) interactionWorker() {
+	var batch []interactionTask
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case task := <-alm.interactionChan:
+			batch = append(batch, task)
+			if len(batch) >= 100 {
+				alm.flushInteractions(batch)
+				batch = batch[:0]
+			}
+		case <-ticker.C:
+			if len(batch) > 0 {
+				alm.flushInteractions(batch)
+				batch = batch[:0]
+			}
+		}
+	}
+}
+
+// flushInteractions performs a bulk insert
+func (alm *AutoLearningMechanism) flushInteractions(batch []interactionTask) {
+	if len(batch) == 0 {
+		return
+	}
+
+	tx, err := alm.db.Begin()
+	if err != nil {
+		fmt.Printf("❌ Failed to begin transaction for batch insert: %v\n", err)
+		return
+	}
+	defer tx.Rollback()
+
+	stmt, err := tx.Prepare(`
+		INSERT INTO user_interactions (query, response_time, success, user_feedback)
+		VALUES (?, ?, ?, ?)
+	`)
+	if err != nil {
+		fmt.Printf("❌ Failed to prepare batch insert statement: %v\n", err)
+		return
+	}
+	defer stmt.Close()
+
+	for _, task := range batch {
+		_, err = stmt.Exec(task.query, task.responseTime, task.success, task.userFeedback)
+		if err != nil {
+			fmt.Printf("❌ Failed to insert interaction in batch: %v\n", err)
+			return // roll back the whole batch to be safe, or continue? We rollback for safety.
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		fmt.Printf("❌ Failed to commit interaction batch: %v\n", err)
+	}
 }
 
 // updateQueryPattern updates query pattern based on interaction
@@ -884,6 +966,17 @@ func (alm *AutoLearningMechanism) ProcessFeedback(queryID string, rating int, co
 	if rating <= 2 { // Low rating - need to adjust
 		alm.learningEngine.decayFactor *= 0.98  // Increase forgetting rate
 		alm.learningEngine.learningRate *= 1.05 // Increase learning rate
+
+		// Broadcast decay event to other components (e.g. Graph, Vector DB)
+		GlobalSyncEngine.Publish(InternalSyncEvent{
+			Type:     "ConfidenceDecayed",
+			EntityID: queryID,
+			Properties: map[string]interface{}{
+				"rating":     rating,
+				"correction": correction,
+				"comment":    comment,
+			},
+		})
 	} else if rating >= 4 { // High rating - reinforce successful patterns
 		alm.learningEngine.decayFactor = math.Min(alm.learningEngine.decayFactor*1.01, 0.99)
 	}

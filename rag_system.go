@@ -72,40 +72,44 @@ type RAGKnowledgeBase struct {
 // ─────────────────────────────────────────────────────────────
 
 type RAGConfig struct {
-	EmbeddingURL    string
-	EmbeddingModel  string
-	EmbeddingDim    int
-	TopK            int
-	Threshold       float64
-	UseVectorSearch bool
+
+	EmbeddingModel          string
+	EmbeddingDim            int
+	TopK                    int
+	Threshold               float64
+	UseVectorSearch         bool
 	EnableGenerativeAnswers bool
+		LLMBaseURL              string
+		LLMModel                string
 	EmbeddingTimeout        time.Duration
 	LLMTimeout              time.Duration
 }
 
 var defaultRAGConfig = RAGConfig{
-	EmbeddingURL:             "http://localhost:1807/v1",
-	EmbeddingModel:           "text-embedding-3-small",
-	EmbeddingDim:             1536,
-	TopK:                     5,
-	Threshold:                0.7,
-	UseVectorSearch:          false,
-	EnableGenerativeAnswers:  false,
-	EmbeddingTimeout:         2500 * time.Millisecond,
-	LLMTimeout:               4 * time.Second,
+
+	EmbeddingModel:          "text-embedding-3-small",
+	EmbeddingDim:            1536,
+	TopK:                    5,
+	Threshold:               0.7,
+	UseVectorSearch:         false,
+	EnableGenerativeAnswers: false,
+	EmbeddingTimeout:        2500 * time.Millisecond,
+		LLMBaseURL:             "",
+		LLMModel:               "gpt-4o-mini",
+	LLMTimeout:              4 * time.Second,
 }
 
 type RAGSystemManager struct {
-	hub         *Hub
-	vectorStore *VectorStore
-	embedder    *EmbeddingGenerator
-	cache       *RAGCache
-	reranker    *HybridReranker
-	assembler   *ContextAssembler
-	llm         *LLMClient
-	config      RAGConfig
-	tagEngine   *TagRuleEngine
-	deferKnowledgeBaseStats bool
+	hub                       *Hub
+	vectorStore               *VectorStore
+	embedder                  *EmbeddingGenerator
+	cache                     *RAGCache
+	reranker                  *HybridReranker
+	assembler                 *ContextAssembler
+	llm                       *LLMClient
+	config                    RAGConfig
+	tagEngine                 *TagRuleEngine
+	deferKnowledgeBaseStats   bool
 	pendingKnowledgeBaseStats map[string]bool
 }
 
@@ -114,7 +118,7 @@ func NewRAGSystemManager(hub *Hub) *RAGSystemManager {
 
 	var llmClient *LLMClient
 	if config.EnableGenerativeAnswers {
-		llmClient = NewLLMClientWithTimeout(config.EmbeddingURL, "gpt-4o-mini", config.LLMTimeout)
+			llmClient = NewLLMClient(config.LLMBaseURL, config.LLMModel)
 	}
 	if llmClient != nil && hub != nil && hub.db != nil {
 		compressor := NewLocalRTKCompressor(hub.db)
@@ -123,19 +127,19 @@ func NewRAGSystemManager(hub *Hub) *RAGSystemManager {
 
 	var embedder *EmbeddingGenerator
 	if config.UseVectorSearch {
-		embedder = NewEmbeddingGeneratorWithTimeout(config.EmbeddingURL, config.EmbeddingModel, config.EmbeddingDim, config.EmbeddingTimeout)
+
 	}
 
 	return &RAGSystemManager{
-		hub:         hub,
-		vectorStore: NewVectorStore(hub.db, config.EmbeddingDim),
-		embedder:    embedder,
-		cache:       NewRAGCache(5 * time.Minute),
-		reranker:    NewHybridReranker(),
-		assembler:   NewContextAssembler(),
-		llm:         llmClient,
-		config:      config,
-		tagEngine:   NewTagRuleEngine(),
+		hub:                       hub,
+		vectorStore:               NewVectorStore(hub.db, config.EmbeddingDim),
+		embedder:                  embedder,
+		cache:                     NewRAGCache(5 * time.Minute),
+		reranker:                  NewHybridReranker(),
+		assembler:                 NewContextAssembler(),
+		llm:                       llmClient,
+		config:                    config,
+		tagEngine:                 NewTagRuleEngine(),
 		pendingKnowledgeBaseStats: make(map[string]bool),
 	}
 }
@@ -144,6 +148,12 @@ func loadRAGConfig() RAGConfig {
 	config := defaultRAGConfig
 	config.UseVectorSearch = getEnvBool("TIBRAIN_ENABLE_VECTOR_SEARCH", config.UseVectorSearch)
 	config.EnableGenerativeAnswers = getEnvBool("TIBRAIN_ENABLE_LLM_ANSWERS", config.EnableGenerativeAnswers)
+	if baseURL := os.Getenv("TIBRAIN_LLM_BASE_URL"); baseURL != "" {
+		config.LLMBaseURL = baseURL
+	}
+	if model := os.Getenv("TIBRAIN_LLM_MODEL"); model != "" {
+		config.LLMModel = model
+	}
 	config.EmbeddingTimeout = time.Duration(getEnvInt("TIBRAIN_EMBEDDING_TIMEOUT_MS", int(config.EmbeddingTimeout/time.Millisecond))) * time.Millisecond
 	config.LLMTimeout = time.Duration(getEnvInt("TIBRAIN_LLM_TIMEOUT_MS", int(config.LLMTimeout/time.Millisecond))) * time.Millisecond
 	return config
@@ -312,6 +322,60 @@ func initRAGSchema(db *sql.DB) error {
 	);
 	CREATE INDEX IF NOT EXISTS idx_rag_feedback_query ON rag_feedback(query_id);
 	CREATE INDEX IF NOT EXISTS idx_rag_feedback_rating ON rag_feedback(rating);
+
+	-- Code Graph Storage
+	CREATE TABLE IF NOT EXISTS code_graph_nodes (
+		id TEXT PRIMARY KEY,
+		type TEXT NOT NULL,
+		name TEXT NOT NULL,
+		file_path TEXT,
+		line_start INTEGER,
+		line_end INTEGER,
+		docstring TEXT,
+		properties TEXT -- JSON encoded
+	);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_nodes_type ON code_graph_nodes(type);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_nodes_name ON code_graph_nodes(name);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_nodes_file_path ON code_graph_nodes(file_path);
+
+	CREATE TABLE IF NOT EXISTS code_graph_edges (
+		id TEXT PRIMARY KEY,
+		source_id TEXT NOT NULL,
+		target_id TEXT NOT NULL,
+		edge_type TEXT NOT NULL,
+		weight REAL DEFAULT 1.0,
+		properties TEXT -- JSON encoded
+	);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_edges_source ON code_graph_edges(source_id);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_edges_target ON code_graph_edges(target_id);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_edges_type ON code_graph_edges(edge_type);
+
+	-- Code Graph Storage
+	CREATE TABLE IF NOT EXISTS code_graph_nodes (
+		id TEXT PRIMARY KEY,
+		type TEXT NOT NULL,
+		name TEXT NOT NULL,
+		file_path TEXT,
+		line_start INTEGER,
+		line_end INTEGER,
+		docstring TEXT,
+		properties TEXT -- JSON encoded
+	);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_nodes_type ON code_graph_nodes(type);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_nodes_name ON code_graph_nodes(name);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_nodes_file_path ON code_graph_nodes(file_path);
+
+	CREATE TABLE IF NOT EXISTS code_graph_edges (
+		id TEXT PRIMARY KEY,
+		source_id TEXT NOT NULL,
+		target_id TEXT NOT NULL,
+		edge_type TEXT NOT NULL,
+		weight REAL DEFAULT 1.0,
+		properties TEXT -- JSON encoded
+	);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_edges_source ON code_graph_edges(source_id);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_edges_target ON code_graph_edges(target_id);
+	CREATE INDEX IF NOT EXISTS idx_code_graph_edges_type ON code_graph_edges(edge_type);
 
 	-- Learning Plane: runtime retrieval traces
 	CREATE TABLE IF NOT EXISTS rag_runtime_traces (

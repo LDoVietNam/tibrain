@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
@@ -109,45 +110,51 @@ func getEnvOrDefault(key, defaultValue string) string {
 }
 
 // Global references for HTTP handlers
-var globalGraphStore *Neo4jGraphStore
 var globalCognitiveMemory *memory.CognitiveMemoryManager
 var globalRetrievalRouter *RetrievalRouter
+var globalTiAgentOrchestrator *TiAgentOrchestrator
+var globalMCPHubClient *MCPHubClient
 
 // ─────────────────────────────────────────────────────────────
 // Configuration
 // ─────────────────────────────────────────────────────────────
 
+type TargetConfigEntry struct {
+	Server string `yaml:"server"`
+}
+
 type Config struct {
-	Port               int
-	DataDir            string
-	IndexKnowledge     bool
-	IndexOnly          bool
-	KnowledgeSources   []string
-	CLIRegistry        bool
-	HandoffTrack       bool
-	SkillSync          bool
-	MCPHubEnabled      bool
-	MCPHubURL          string
-	MCPHubAutoSync     bool
-	MCPHubSyncInterval string
-	MCPHubRegistryFile string
+	Port             int
+	DataDir          string
+	AllowedRoots     []string
+	IndexKnowledge   bool
+	IndexOnly        bool
+	KnowledgeSources []string
+	CLIRegistry      bool
+	HandoffTrack     bool
+	SkillSync        bool
+
+	MCP struct {
+		PublicName          string                       `yaml:"public_name"`
+		PublicMode          string                       `yaml:"public_mode"`
+		ExposeUpstreamTools bool                         `yaml:"expose_upstream_tools"`
+		Compatibility       bool                         `yaml:"compatibility_aliases"`
+		InternalHubURL      string
+		Targets             map[string]TargetConfigEntry `yaml:"targets"`
+	}
 }
 
 func defaultConfig() *Config {
 	wd, _ := os.Getwd()
 	tibrainDataDir := filepath.Join(wd, "tibrain_data")
 	return &Config{
-		Port:               1810,
-		DataDir:            tibrainDataDir,
-		KnowledgeSources:   []string{},
-		CLIRegistry:        true,
-		HandoffTrack:       true,
-		SkillSync:          false,
-		MCPHubEnabled:      false,
-		MCPHubURL:          "http://localhost:3000",
-		MCPHubAutoSync:     true,
-		MCPHubSyncInterval: "5m",
-		MCPHubRegistryFile: filepath.Join(tibrainDataDir, "mcp_registry.json"),
+		Port:             1810,
+		DataDir:          tibrainDataDir,
+		AllowedRoots:     []string{`Z:\02_CORE\_cli\.config`, `Z:\02_CORE\skills`, `Z:\01_PROJECTS\apps\extension`},
+		KnowledgeSources: []string{},
+		CLIRegistry:      true,
+		HandoffTrack:     true,
+		SkillSync:        false,
 	}
 }
 
@@ -158,16 +165,10 @@ func loadConfig() *Config {
 	if data, err := os.ReadFile(configFile); err == nil {
 		var yamlConfig struct {
 			TiBrain struct {
-				Port    int    `yaml:"port"`
-				DataDir string `yaml:"data_dir"`
+				Port         int      `yaml:"port"`
+				DataDir      string   `yaml:"data_dir"`
+				AllowedRoots []string `yaml:"allowed_roots"`
 			} `yaml:"tibrain"`
-			MCPHub struct {
-				Enabled      bool   `yaml:"enabled"`
-				HubURL       string `yaml:"hub_url"`
-				AutoSync     bool   `yaml:"auto_sync"`
-				SyncInterval string `yaml:"sync_interval"`
-				RegistryFile string `yaml:"registry_file"`
-			} `yaml:"mcp_hub"`
 			CLIRegistry struct {
 				Enabled bool `yaml:"enabled"`
 			} `yaml:"cli_registry"`
@@ -177,6 +178,17 @@ func loadConfig() *Config {
 			SkillSync struct {
 				Enabled bool `yaml:"enabled"`
 			} `yaml:"skill_sync"`
+			MCP struct {
+				PublicName          string                       `yaml:"public_name"`
+				PublicMode          string                       `yaml:"public_mode"`
+				ExposeUpstreamTools bool                         `yaml:"expose_upstream_tools"`
+				Compatibility       bool                         `yaml:"compatibility_aliases"`
+				InternalHub         struct {
+					Enabled bool   `yaml:"enabled"`
+					URL     string `yaml:"url"`
+				} `yaml:"internal_hub"`
+				Targets             map[string]TargetConfigEntry `yaml:"targets"`
+			} `yaml:"mcp"`
 		}
 
 		if err := yaml.Unmarshal(data, &yamlConfig); err == nil {
@@ -186,25 +198,37 @@ func loadConfig() *Config {
 			if yamlConfig.TiBrain.DataDir != "" {
 				config.DataDir = yamlConfig.TiBrain.DataDir
 			}
-			config.MCPHubEnabled = yamlConfig.MCPHub.Enabled
-			if yamlConfig.MCPHub.HubURL != "" {
-				config.MCPHubURL = yamlConfig.MCPHub.HubURL
-			}
-			config.MCPHubAutoSync = yamlConfig.MCPHub.AutoSync
-			if yamlConfig.MCPHub.SyncInterval != "" {
-				config.MCPHubSyncInterval = yamlConfig.MCPHub.SyncInterval
-			}
-			if yamlConfig.MCPHub.RegistryFile != "" {
-				config.MCPHubRegistryFile = yamlConfig.MCPHub.RegistryFile
+			if len(yamlConfig.TiBrain.AllowedRoots) > 0 {
+				config.AllowedRoots = append([]string(nil), yamlConfig.TiBrain.AllowedRoots...)
 			}
 			config.CLIRegistry = yamlConfig.CLIRegistry.Enabled
 			config.HandoffTrack = yamlConfig.HandoffTracking.Enabled
 			config.SkillSync = yamlConfig.SkillSync.Enabled
+
+			config.MCP.PublicName = yamlConfig.MCP.PublicName
+			config.MCP.PublicMode = yamlConfig.MCP.PublicMode
+			config.MCP.ExposeUpstreamTools = yamlConfig.MCP.ExposeUpstreamTools
+			config.MCP.Compatibility = yamlConfig.MCP.Compatibility
+			config.MCP.InternalHubURL = yamlConfig.MCP.InternalHub.URL
+			config.MCP.Targets = yamlConfig.MCP.Targets
+
+			// Populate global target registry with configured targets
+			for alias, entry := range yamlConfig.MCP.Targets {
+				if entry.Server != "" {
+					globalTargetRegistry.Register(alias, entry.Server)
+				}
+			}
 		}
 	}
 
 	if os.Getenv("TIBRAIN_INDEX_KNOWLEDGE") == "1" || strings.EqualFold(os.Getenv("TIBRAIN_INDEX_KNOWLEDGE"), "true") {
 		config.IndexKnowledge = true
+	}
+
+	if raw := strings.TrimSpace(os.Getenv("TIBRAIN_ALLOWED_ROOTS")); raw != "" {
+		config.AllowedRoots = parseAllowedRootsList(raw)
+	} else if raw := strings.TrimSpace(os.Getenv("MCP_ALLOWED_ROOTS")); raw != "" {
+		config.AllowedRoots = parseAllowedRootsList(raw)
 	}
 
 	return config
@@ -260,21 +284,6 @@ func (h *Hub) Close() error {
 		h.asyncWriter.Close()
 	}
 	return h.db.Close()
-}
-
-// memoryGraphAdapter wraps *Neo4jGraphStore so it satisfies memory.GraphStore.
-// memory.GraphStore.AddNode takes `any` (to avoid a hard dep on its GraphNode
-// type); the real Neo4j method takes a concrete GraphNode.
-type memoryGraphAdapter struct {
-	gs *Neo4jGraphStore
-}
-
-func (a memoryGraphAdapter) AddNode(ctx context.Context, node any) (string, error) {
-	gn, ok := node.(GraphNode)
-	if !ok {
-		return "", fmt.Errorf("memoryGraphAdapter: expected GraphNode, got %T", node)
-	}
-	return a.gs.AddNode(ctx, gn)
 }
 
 // BeginTx starts a new SQL transaction. Used by packages that need a
@@ -618,99 +627,6 @@ func (h *Hub) GetMCP(id string) (*MCPServer, error) {
 // MCP Hub Registry Operations
 // ─────────────────────────────────────────────────────────────
 
-type MCPHubServer struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Endpoint    string `json:"endpoint"`
-	Transport   string `json:"transport"`
-	Tools       string `json:"tools"`
-	Resources   string `json:"resources"`
-	Description string `json:"description"`
-	Enabled     bool   `json:"enabled"`
-	SyncedAt    int64  `json:"synced_at"`
-	CreatedAt   int64  `json:"created_at"`
-	UpdatedAt   int64  `json:"updated_at"`
-}
-
-func (h *Hub) RegisterMCPHubServer(id, name, endpoint, transport, tools, resources, description string, enabled bool) error {
-	timestamp := time.Now().Unix()
-
-	enabledInt := 0
-	if enabled {
-		enabledInt = 1
-	}
-
-	_, err := h.db.Exec(`
-		INSERT OR REPLACE INTO mcp_hub_registry (id, name, endpoint, transport, tools, resources, description, enabled, synced_at, created_at, updated_at)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, id, name, endpoint, transport, tools, resources, description, enabledInt, timestamp, timestamp, timestamp)
-
-	if err != nil {
-		return fmt.Errorf("register mcp hub server: %w", err)
-	}
-
-	logger.Info("MCP Hub server registered: %s (%s)", id, name)
-	return nil
-}
-
-func (h *Hub) ListMCPHubServers() ([]MCPHubServer, error) {
-	query := `SELECT id, name, endpoint, transport, tools, resources, description, enabled, synced_at, created_at, updated_at
-		FROM mcp_hub_registry WHERE enabled = 1 ORDER BY created_at DESC`
-
-	rows, err := h.db.Query(query)
-	if err != nil {
-		return nil, fmt.Errorf("list mcp hub servers: %w", err)
-	}
-	defer rows.Close()
-
-	var servers []MCPHubServer
-	for rows.Next() {
-		var s MCPHubServer
-		var enabledInt int
-		if err := rows.Scan(&s.ID, &s.Name, &s.Endpoint, &s.Transport, &s.Tools, &s.Resources, &s.Description, &enabledInt, &s.SyncedAt, &s.CreatedAt, &s.UpdatedAt); err != nil {
-			return nil, fmt.Errorf("scan mcp hub server: %w", err)
-		}
-
-		s.Enabled = enabledInt == 1
-		servers = append(servers, s)
-	}
-
-	return servers, nil
-}
-
-func (h *Hub) GetMCPHubServer(id string) (*MCPHubServer, error) {
-	query := `SELECT id, name, endpoint, transport, tools, resources, description, enabled, synced_at, created_at, updated_at
-		FROM mcp_hub_registry WHERE id = ?`
-
-	row := h.db.QueryRow(query, id)
-
-	var s MCPHubServer
-	var enabledInt int
-	if err := row.Scan(&s.ID, &s.Name, &s.Endpoint, &s.Transport, &s.Tools, &s.Resources, &s.Description, &enabledInt, &s.SyncedAt, &s.CreatedAt, &s.UpdatedAt); err != nil {
-		if err == sql.ErrNoRows {
-			return nil, fmt.Errorf("mcp hub server not found")
-		}
-		return nil, fmt.Errorf("query mcp hub server: %w", err)
-	}
-
-	s.Enabled = enabledInt == 1
-	return &s, nil
-}
-
-func (h *Hub) UpdateMCPHubServerSyncTime(id string) error {
-	timestamp := time.Now().Unix()
-
-	_, err := h.db.Exec(`
-		UPDATE mcp_hub_registry SET synced_at = ?, updated_at = ? WHERE id = ?
-	`, timestamp, timestamp, id)
-
-	if err != nil {
-		return fmt.Errorf("update sync time: %w", err)
-	}
-
-	return nil
-}
-
 // SyncMCPTools syncs tools from all enabled MCP servers to Tool Registry
 func (h *Hub) SyncMCPTools() error {
 	// Get all enabled MCP servers
@@ -736,9 +652,113 @@ func (h *Hub) SyncMCPTools() error {
 }
 
 // CallMCPTool calls a tool on an MCP server
-// TODO: Integrate with MCP Hub instead of individual MCP clients
+// Integrated with additional Tiborn tools and Cloudflare MCP client
 func (h *Hub) CallMCPTool(toolID string, params map[string]interface{}) (map[string]interface{}, error) {
-	return nil, fmt.Errorf("MCP tool calling disabled")
+	// Handle Tiborn-specific tools
+	switch toolID {
+	case "tibrain_query":
+		// Extract query and limit parameters
+		query, _ := params["query"].(string)
+		limitFloat, _ := params["limit"].(float64)
+		limit := int(limitFloat)
+		if limit <= 0 {
+			limit = 5 // Default limit
+		}
+
+		// Execute query against Tiborn's knowledge base
+		ctx := context.Background()
+		results, err := h.Query(ctx, query, "default", limit, 0.5)
+		if err != nil {
+			return nil, err
+		}
+
+		// Format results
+		var formattedResults []interface{}
+		for _, res := range results.Results {
+			formattedResults = append(formattedResults, map[string]interface{}{
+				"content": res.Content,
+				"score":   res.Score,
+				"source":  res.FilePath,
+				"title":   res.Title,
+			})
+		}
+
+		return map[string]interface{}{
+			"success": true,
+			"results": formattedResults,
+			"count":   len(formattedResults),
+			"query":   query,
+			"limit":   limit,
+		}, nil
+
+	case "tibrain_list_tools":
+		// List all enabled tools from Tiborn's registry
+		tools, err := h.ListTools("")
+		if err != nil {
+			return nil, err
+		}
+		var toolList []interface{}
+		for _, t := range tools {
+			if t.Enabled {
+				toolList = append(toolList, map[string]interface{}{
+					"name":           t.Name,
+					"description":    t.Description,
+					"category":       t.Category,
+					"enabled":        t.Enabled,
+					"quality_score":  t.QualityScore,
+					"security_score": t.SecurityScore,
+				})
+			}
+		}
+
+		return map[string]interface{}{
+			"success": true,
+			"tools":   toolList,
+			"count":   len(toolList),
+		}, nil
+
+	case "tibrain_get_memory_stats":
+		// Get cognitive memory statistics
+		ctx := context.Background()
+		stats, err := globalCognitiveMemory.GetMemoryStats(ctx)
+		if err != nil {
+			return nil, err
+		}
+		return map[string]interface{}{
+			"success": true,
+			"stats":   stats,
+		}, nil
+
+	case "tibrain_list_agents":
+		// List agent-related tools from Tiborn's registry
+		tools, err := h.ListTools("")
+		if err != nil {
+			return nil, err
+		}
+		var agentTools []interface{}
+		for _, t := range tools {
+			if strings.Contains(strings.ToLower(t.Category), "agent") || strings.Contains(strings.ToLower(t.Name), "agent") {
+				agentTools = append(agentTools, map[string]interface{}{
+					"name":           t.Name,
+					"description":    t.Description,
+					"category":       t.Category,
+					"enabled":        t.Enabled,
+					"quality_score":  t.QualityScore,
+					"security_score": t.SecurityScore,
+				})
+			}
+		}
+
+		return map[string]interface{}{
+			"success": true,
+			"tools":   agentTools,
+			"count":   len(agentTools),
+		}, nil
+
+	default:
+		// For other tools, return not implemented (to be filled in later)
+		return nil, fmt.Errorf("tool not implemented: %s", toolID)
+	}
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1215,34 +1235,54 @@ func (s *Server) handleExecuteTool(w http.ResponseWriter, r *http.Request) {
 	var response map[string]interface{}
 	var err error
 
-	// Check if this is an MCP tool
 	if strings.HasPrefix(req.Name, "mcp-") {
-		// Execute MCP tool
-		response, err = s.hub.CallMCPTool(req.Name, req.Params)
+		result, callErr := s.hub.CallMCPTool(req.Name, req.Params)
+		err = callErr
 		if err != nil {
 			response = map[string]interface{}{
-				"success": false,
-				"error":   err.Error(),
-				"tool":    req.Name,
+				"success":  false,
+				"error":    err.Error(),
+				"tool":     req.Name,
+				"executed": false,
 			}
 		} else {
-			response["success"] = true
-			response["tool"] = req.Name
+			response = map[string]interface{}{
+				"success":     true,
+				"tool":        req.Name,
+				"executed":    true,
+				"executor_id": "mcp-hub",
+				"source":      "mcp",
+				"result":      result,
+			}
 		}
 	} else {
-		// Delegate to Router for non-MCP tools
-		response = map[string]interface{}{
-			"success": true,
-			"tool":    req.Name,
-			"params":  req.Params,
-			"message": "Tool execution delegated to Router",
+		result, execErr := s.executeLocalTool(r.Context(), req.Name, req.Params)
+		err = execErr
+		if err != nil {
+			response = map[string]interface{}{
+				"success":     false,
+				"error":       err.Error(),
+				"tool":        req.Name,
+				"executed":    false,
+				"executor_id": "ti-local-cli",
+				"source":      "local",
+			}
+		} else {
+			response = map[string]interface{}{
+				"success":     true,
+				"tool":        req.Name,
+				"executed":    true,
+				"executor_id": "ti-local-cli",
+				"source":      "local",
+				"result":      result,
+			}
 		}
 	}
 
 	// Log tool usage
 	paramsJSON, _ := json.Marshal(req.Params)
 	resultJSON, _ := json.Marshal(response)
-	success := response["success"].(bool)
+	success, _ := response["success"].(bool)
 	errorMsg := ""
 	if !success {
 		if errStr, ok := response["error"].(string); ok {
@@ -1594,18 +1634,243 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	clis, _ := s.hub.ListCLIs()
 
 	response := map[string]interface{}{
-		"status":          "ok",
-		"tibrain":         "TiBrain Central Hub v1.0.0",
-		"active_clis":     len(clis),
-		"cli_registry":    s.config.CLIRegistry,
-		"handoff_track":   s.config.HandoffTrack,
-		"skill_sync":      s.config.SkillSync,
-		"mcp_hub_enabled": s.config.MCPHubEnabled,
-		"mcp_hub_url":     s.config.MCPHubURL,
+		"status":        "ok",
+		"tibrain":       "TiBrain Central Hub v1.0.0",
+		"active_clis":   len(clis),
+		"cli_registry":  s.config.CLIRegistry,
+		"handoff_track": s.config.HandoffTrack,
+		"skill_sync":    s.config.SkillSync,
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (s *Server) buildOverviewData() map[string]interface{} {
+	// Gather system overview information
+	clis, _ := s.hub.ListCLIs()
+	mcps, _ := s.hub.ListMCPs("")
+	tools, _ := s.hub.ListTools("")
+
+	var memoryStats map[string]interface{}
+	if globalCognitiveMemory != nil {
+		ctx := context.Background()
+		memoryStats, _ = globalCognitiveMemory.GetMemoryStats(ctx)
+	}
+
+	var ragStatus bool
+	if globalRetrievalRouter != nil {
+		ctx := context.Background()
+		_, err := globalRetrievalRouter.ExecuteRoute(ctx, "ping", &RoutingDecision{Route: RouteGlobalRAG}, nil, nil)
+		ragStatus = err == nil
+	}
+
+	// Get recent handoffs
+	recentHandoffs := []GlobalHandoff{}
+	if len(clis) > 0 {
+		recentHandoffs, _ = s.hub.ListHandoffs(clis[0].CLIID)
+		if len(recentHandoffs) > 10 {
+			recentHandoffs = recentHandoffs[:10]
+		}
+	}
+
+	// Count tools by category
+	toolCategories := make(map[string]int)
+	for _, tool := range tools {
+		toolCategories[tool.Category]++
+	}
+
+	return map[string]interface{}{
+		"status":          "ok",
+		"timestamp":       time.Now().Unix(),
+		"tibrain_version": "v1.0.0",
+		"components": map[string]interface{}{
+			"cli_registry": map[string]interface{}{
+				"enabled":    s.config.CLIRegistry,
+				"total_clis": len(clis),
+				"active_clis": func() int {
+					count := 0
+					for _, cli := range clis {
+						if cli.Status == "active" {
+							count++
+						}
+					}
+					return count
+				}(),
+				"clis": clis,
+			},
+			"mcp_registry": map[string]interface{}{
+				"enabled":       true,
+				"total_servers": len(mcps),
+				"active_servers": func() int {
+					count := 0
+					for _, mcp := range mcps {
+						if mcp.Enabled {
+							count++
+						}
+					}
+					return count
+				}(),
+			},
+			"tool_registry": map[string]interface{}{
+				"total_tools": len(tools),
+				"categories":  toolCategories,
+			},
+			"cognitive_memory": memoryStats,
+			"retrieval_system": map[string]interface{}{
+				"enabled": globalRetrievalRouter != nil,
+				"status":  ragStatus,
+			},
+			"agent_orchestrator": map[string]interface{}{
+				"enabled": globalTiAgentOrchestrator != nil,
+			},
+			"handoff_system": map[string]interface{}{
+				"enabled":         s.config.HandoffTrack,
+				"recent_handoffs": recentHandoffs,
+			},
+			"skill_sync": map[string]interface{}{
+				"enabled": s.config.SkillSync,
+			},
+		},
+		"knowledge_base": map[string]interface{}{
+			"indexing_enabled": s.config.IndexKnowledge,
+			"data_dir":         s.config.DataDir,
+		},
+	}
+}
+
+func (s *Server) handleOverviewJSON(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(s.buildOverviewData())
+}
+
+// Overview Handler provides a browser-friendly summary on the same port.
+func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
+	data := s.buildOverviewData()
+	dataJSON, _ := json.MarshalIndent(data, "", "  ")
+
+	components := data["components"].(map[string]interface{})
+	cliRegistry := components["cli_registry"].(map[string]interface{})
+	mcpRegistry := components["mcp_registry"].(map[string]interface{})
+	toolRegistry := components["tool_registry"].(map[string]interface{})
+	retrieval := components["retrieval_system"].(map[string]interface{})
+
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, _ = fmt.Fprintf(w, `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TiBrain Overview</title>
+  <style>
+    :root { color-scheme: dark; --bg: #071018; --panel: #0f1b28; --text: #e8f1ff; --muted: #8ea4bd; --accent: #66d9ff; --border: rgba(255,255,255,.08); }
+    body { margin: 0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif; background: radial-gradient(circle at top, #102334, #071018 55%%); color: var(--text); }
+    .wrap { max-width: 1180px; margin: 0 auto; padding: 32px 20px 48px; }
+    .hero { display: flex; justify-content: space-between; gap: 20px; align-items: end; margin-bottom: 24px; }
+    h1 { margin: 0; font-size: 34px; letter-spacing: -0.03em; }
+    .sub { color: var(--muted); margin-top: 8px; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.03); color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin: 20px 0; }
+    .card, pre { background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border: 1px solid var(--border); border-radius: 18px; box-shadow: 0 12px 28px rgba(0,0,0,.24); }
+    .card { padding: 18px; }
+    .label { font-size: 12px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin-bottom: 10px; }
+    .value { font-size: 28px; font-weight: 700; }
+    .section { margin-top: 24px; }
+    .section h2 { margin: 0 0 12px; font-size: 18px; }
+    pre { margin: 0; padding: 18px; overflow: auto; color: #cfe4ff; line-height: 1.5; }
+    a { color: var(--accent); text-decoration: none; }
+    .links { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>TiBrain Overview</h1>
+        <div class="sub">Browser UI and API share the same port: <strong>1810</strong>.</div>
+      </div>
+      <div class="pill">Single-port startup: backend + browser UI</div>
+    </div>
+    <div class="grid">
+      <div class="card"><div class="label">Status</div><div class="value">%s</div></div>
+      <div class="card"><div class="label">CLI Registry</div><div class="value">%v</div></div>
+      <div class="card"><div class="label">MCP Servers</div><div class="value">%d</div></div>
+      <div class="card"><div class="label">Tools</div><div class="value">%d</div></div>
+      <div class="card"><div class="label">Memory</div><div class="value">%v</div></div>
+      <div class="card"><div class="label">RAG</div><div class="value">%v</div></div>
+    </div>
+    <div class="section">
+      <h2>Links</h2>
+      <div class="links">
+        <a href="/api/status">API Status</a>
+        <a href="/api/health">Health</a>
+        <a href="/api/overview">JSON Overview</a>
+        <a href="/api/knowledge/status">Knowledge</a>
+        <a href="/api/rag/status">RAG</a>
+      </div>
+    </div>
+    <div class="section">
+      <h2>Live Snapshot</h2>
+      <pre>%s</pre>
+    </div>
+  </div>
+</body>
+</html>`,
+		data["status"],
+		cliRegistry["enabled"],
+		mcpRegistry["total_servers"],
+		toolRegistry["total_tools"],
+		components["cognitive_memory"] != nil,
+		retrieval["enabled"],
+		template.HTMLEscapeString(string(dataJSON)),
+	)
+}
+
+// Ready Handler
+func (s *Server) handleReady(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 2*time.Second)
+	defer cancel()
+
+	ready := map[string]interface{}{
+		"status":     "ready",
+		"components": map[string]interface{}{},
+	}
+
+	components := ready["components"].(map[string]interface{})
+
+	hubReady := s.hub != nil && s.hub.db != nil
+	components["hub"] = hubReady
+
+	memoryReady := globalCognitiveMemory != nil
+	components["memory"] = memoryReady
+	if memoryReady {
+		if _, err := globalCognitiveMemory.GetMemoryStats(ctx); err != nil {
+			components["memory"] = false
+			ready["status"] = "degraded"
+			ready["memory_error"] = err.Error()
+		}
+	}
+
+	ragReady := globalRetrievalRouter != nil
+	components["rag"] = ragReady
+	if ragReady {
+		if _, err := globalRetrievalRouter.ExecuteRoute(ctx, "ping", &RoutingDecision{Route: RouteGlobalRAG}, nil, nil); err != nil {
+			components["rag"] = false
+			ready["status"] = "degraded"
+			ready["rag_error"] = err.Error()
+		}
+	}
+
+	components["mcp"] = true
+	components["code_graph_background"] = true
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ready)
 }
 
 // Notion Sync Handler
@@ -1643,191 +1908,47 @@ func (s *Server) handleNotionSync(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// ─────────────────────────────────────────────────────────────
+// MCP Health Check Handler - Simple endpoint to verify Tiborn's MCP server is operational
+func (s *Server) handleMCPHealth(w http.ResponseWriter, r *http.Request) {
+	// Check database connection - essential for MCP operations
+	if s.hub == nil || s.hub.db == nil {
+		http.Error(w, "database disconnected", http.StatusServiceUnavailable)
+		return
+	}
+
+	// Simple query to verify DB is responsive
+	ctx := r.Context()
+	if _, err := s.hub.QueryContext(ctx, "SELECT 1", "test", 1, 0); err != nil {
+		http.Error(w, fmt.Sprintf("database query failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Check if we have at least one tool registered (basic sanity check for MCP server)
+	tools, err := s.hub.ListTools("")
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to list tools: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	if len(tools) == 0 {
+		http.Error(w, "no tools registered", http.StatusServiceUnavailable)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":       "ok",
+		"service":      "tiborn-mcp-server",
+		"timestamp":    time.Now().Unix(),
+		"tools_count":  len(tools),
+		"db_connected": true,
+	})
+}
+
+// Enhanced CallMCPTool implementation for Tiborn-Router integration
+// Handles the specific tools that Router's MCP client expects
 // MCP Hub HTTP Handlers
 // ─────────────────────────────────────────────────────────────
-
-// handleMCPHubSync syncs MCP servers from MCP Hub
-func (s *Server) handleMCPHubSync(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	if !s.config.MCPHubEnabled {
-		http.Error(w, "MCP Hub is not enabled", http.StatusServiceUnavailable)
-		return
-	}
-
-	// Sync tools from local MCP Hub registry
-	servers, err := s.hub.ListMCPHubServers()
-	if err != nil {
-		logger.Error("Failed to list MCP Hub servers: %v", err)
-		http.Error(w, fmt.Sprintf("Failed to list servers: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	syncedCount := 0
-	for _, server := range servers {
-		if !server.Enabled {
-			continue
-		}
-
-		logger.Info("Syncing tools from MCP Hub server: %s", server.Name)
-
-		// Parse tools JSON
-		var tools []struct {
-			Name        string `json:"name"`
-			Description string `json:"description"`
-		}
-		if err := json.Unmarshal([]byte(server.Tools), &tools); err != nil {
-			logger.Warn("Failed to parse tools for %s: %v", server.Name, err)
-			continue
-		}
-
-		// Register each tool
-		for _, tool := range tools {
-			toolID := fmt.Sprintf("mcp-hub-%s-%s", server.ID, tool.Name)
-			toolReg := Tool{
-				ID:                 toolID,
-				Name:               tool.Name,
-				Description:        tool.Description,
-				Parameters:         "{}",
-				Handler:            "mcp-hub",
-				Category:           "mcp",
-				Permissions:        `["devin","claude","cursor"]`,
-				Enabled:            true,
-				QualityScore:       80,
-				SecurityScore:      80,
-				BestPracticesScore: 80,
-				Source:             "mcp-hub",
-				Family:             "",
-				Tags:               "",
-				Version:            "",
-				SkillLevel:         "l2",
-				QualityTier:        "platinum",
-				SecurityTier:       "hardened",
-				SecurityStatus:     "passed",
-				ValidationStatus:   "passed",
-				VariantID:          "",
-				VariantLabel:       "",
-				SourceType:         "community",
-				RootPath:           "",
-			}
-
-			if err := s.hub.RegisterTool(toolReg); err != nil {
-				logger.Warn("Failed to register tool %s: %v", tool.Name, err)
-			} else {
-				syncedCount++
-			}
-		}
-
-		// Update sync time
-		if err := s.hub.UpdateMCPHubServerSyncTime(server.ID); err != nil {
-			logger.Warn("Failed to update sync time for %s: %v", server.Name, err)
-		}
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "ok",
-		"message": "MCP Hub sync completed",
-		"synced":  syncedCount,
-		"servers": len(servers),
-	})
-}
-
-// handleMCPHubList lists MCP Hub servers
-func (s *Server) handleMCPHubList(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	servers, err := s.hub.ListMCPHubServers()
-	if err != nil {
-		http.Error(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"servers": servers,
-		"count":   len(servers),
-	})
-}
-
-// handleMCPHubGet gets a specific MCP Hub server
-func (s *Server) handleMCPHubGet(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	id := r.URL.Query().Get("id")
-	if id == "" {
-		http.Error(w, "id required", http.StatusBadRequest)
-		return
-	}
-
-	server, err := s.hub.GetMCPHubServer(id)
-	if err != nil {
-		if err.Error() == "mcp hub server not found" {
-			http.Error(w, "Server not found", http.StatusNotFound)
-		} else {
-			http.Error(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(server)
-}
-
-// handleMCPHubRegister registers a new MCP Hub server
-func (s *Server) handleMCPHubRegister(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-
-	var req struct {
-		ID          string `json:"id"`
-		Name        string `json:"name"`
-		Endpoint    string `json:"endpoint"`
-		Transport   string `json:"transport"`
-		Tools       string `json:"tools"`
-		Resources   string `json:"resources"`
-		Description string `json:"description"`
-		Enabled     bool   `json:"enabled"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
-
-	if req.ID == "" || req.Name == "" || req.Endpoint == "" {
-		http.Error(w, "id, name, and endpoint required", http.StatusBadRequest)
-		return
-	}
-
-	if req.Transport == "" {
-		req.Transport = "stdio"
-	}
-
-	if err := s.hub.RegisterMCPHubServer(req.ID, req.Name, req.Endpoint, req.Transport, req.Tools, req.Resources, req.Description, req.Enabled); err != nil {
-		http.Error(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]interface{}{
-		"status":  "ok",
-		"id":      req.ID,
-		"message": "MCP Hub server registered",
-	})
-}
 
 // ─────────────────────────────────────────────────────────────
 // Main
@@ -1968,7 +2089,10 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req struct {
-		Message string `json:"message"`
+		Message   string                 `json:"message"`
+		SessionID string                 `json:"session_id,omitempty"`
+		Context   map[string]interface{} `json:"context,omitempty"`
+		Model     string                 `json:"model,omitempty"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -1976,9 +2100,134 @@ func (s *Server) handleChat(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if req.Message == "" {
+		http.Error(w, "message is required", http.StatusBadRequest)
+		return
+	}
+
+	ctx := context.Background()
+
+	// 1. Recall recent conversation history from cognitive memory
+	var conversationHistory []string
+	if req.SessionID != "" && globalCognitiveMemory != nil {
+		entries, err := globalCognitiveMemory.GetRecentExperience(ctx, 10)
+		if err == nil {
+			for _, e := range entries {
+				if ctxVal, ok := e.Context["session_id"]; ok && ctxVal == req.SessionID {
+					conversationHistory = append(conversationHistory, fmt.Sprintf("[%s] %s", e.Type, e.Content))
+				}
+			}
+		}
+	}
+
+	// 2. Build enriched context from memory + provided context
+	enrichedCtx := make(map[string]interface{})
+	for k, v := range req.Context {
+		enrichedCtx[k] = v
+	}
+	if req.SessionID != "" {
+		enrichedCtx["session_id"] = req.SessionID
+	}
+	if len(conversationHistory) > 0 {
+		enrichedCtx["conversation_history"] = strings.Join(conversationHistory, "\n")
+	}
+
+	// 3. Use RetrievalRouter for RAG context
+	var ragResponse *StandardizedRAGResponse
+	if globalRetrievalRouter != nil {
+		decision := globalRetrievalRouter.RouteQuery(ctx, req.Message)
+		if decision != nil {
+			resp, err := globalRetrievalRouter.ExecuteRoute(ctx, req.Message, decision, nil, nil)
+			if err == nil {
+				ragResponse = resp
+			}
+		}
+	}
+
+	// 4. Store user message in cognitive memory
+	if globalCognitiveMemory != nil {
+		memCtx := map[string]interface{}{
+			"source":     "chat",
+			"session_id": req.SessionID,
+		}
+		for k, v := range enrichedCtx {
+			memCtx[k] = v
+		}
+		globalCognitiveMemory.StoreEpisodicMemory(ctx, fmt.Sprintf("user: %s", req.Message), memCtx)
+	}
+
+	// 5. Try TiAgentOrchestrator for processing
+	var orchestratorResponse *AgentResponse
+	if globalTiAgentOrchestrator != nil {
+		agentReq := &AgentRequest{
+			AgentID:     "tibrain-chat",
+			AgentType:   "chat",
+			SessionID:   req.SessionID,
+			Query:       req.Message,
+			RequestType: "query",
+			Context:     enrichedCtx,
+		}
+		orchestratorResponse, _ = globalTiAgentOrchestrator.ProcessAgentRequest(ctx, *agentReq)
+	}
+
+	// 6. Build answer
+	answer := ""
+	sources := make([]map[string]interface{}, 0)
+	confidence := 0.0
+
+	if orchestratorResponse != nil && orchestratorResponse.Success {
+		answer = orchestratorResponse.Response
+		confidence = orchestratorResponse.Confidence
+	}
+
+	// Use RAG results if orchestrator didn't produce answer
+	if answer == "" && ragResponse != nil {
+		if ragResponse.Answer != "" {
+			answer = ragResponse.Answer
+		}
+		if len(ragResponse.Results) > 0 {
+			// Use top result as concise answer
+			if answer == "" {
+				answer = ragResponse.Results[0].Content
+			}
+			for _, r := range ragResponse.Results {
+				sources = append(sources, map[string]interface{}{
+					"content": r.Content,
+					"score":   r.Score,
+					"source":  r.Source,
+				})
+			}
+		}
+		confidence = ragResponse.Confidence
+	}
+
+	// Last fallback: just acknowledge
+	if answer == "" {
+		answer = fmt.Sprintf("TiBrain đã nhận tin nhắn của bạn. Hiện tại không có kết quả RAG phù hợp.")
+	}
+
+	// 7. Store assistant response in cognitive memory
+	if globalCognitiveMemory != nil {
+		globalCognitiveMemory.StoreEpisodicMemory(ctx, fmt.Sprintf("assistant: %s", answer), map[string]interface{}{
+			"source":     "tibrain",
+			"session_id": req.SessionID,
+			"confidence": confidence,
+		})
+	}
+
+	// 8. Return structured response
 	json.NewEncoder(w).Encode(map[string]interface{}{
-		"response": fmt.Sprintf("Echo: %s", req.Message),
-		"status":   "success",
+		"response":   answer,
+		"confidence": confidence,
+		"sources":    sources,
+		"route": func() string {
+			if ragResponse != nil {
+				return string(ragResponse.Route)
+			}
+			return "chat"
+		}(),
+		"session_id": req.SessionID,
+		"status":     "success",
 	})
 }
 
@@ -2016,11 +2265,149 @@ func (s *Server) handleAgentProcess(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// ─────────────────────────────────────────────────────────────
+// MCP Hub Handlers - Proxy/Hub Management
+// ─────────────────────────────────────────────────────────────
+
+// handleMCPHubServers - List MCP servers from the proxy
+func (s *Server) handleMCPHubServers(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	if globalMCPHubClient == nil {
+		http.Error(w, "MCP hub client not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	servers, err := globalMCPHubClient.ListServers(ctx)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to list MCP servers: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"servers": servers,
+		"count":   len(servers),
+	})
+}
+
+// handleMCPHubTools - List tools from MCP proxy
+func (s *Server) handleMCPHubTools(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	if globalMCPHubClient == nil {
+		http.Error(w, "MCP hub client not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	tools, err := globalMCPHubClient.ListTools(ctx)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to list MCP tools: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"tools": tools,
+		"count": len(tools),
+	})
+}
+
+// handleMCPHubCall - Call tool on MCP proxy
+func (s *Server) handleMCPHubCall(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	if globalMCPHubClient == nil {
+		http.Error(w, "MCP hub client not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	var req struct {
+		Server string                 `json:"server"`
+		Tool   string                 `json:"tool"`
+		Access string                 `json:"access,omitempty"`
+		Args   map[string]interface{} `json:"args"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if req.Server == "" || req.Tool == "" {
+		http.Error(w, "server and tool parameters required", http.StatusBadRequest)
+		return
+	}
+
+	access := MCPToolAccess(strings.TrimSpace(req.Access))
+	if access == "" || access == "auto" {
+		access = inferMCPToolAccess(req.Tool)
+	}
+
+	result, err := globalMCPHubClient.CallToolWithAccess(ctx, req.Server, req.Tool, req.Args, access)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to call MCP tool: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"result":  result,
+	})
+}
+
+// handleSyncMCPHub - Sync MCP tools to registry
+func (s *Server) handleSyncMCPHub(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	if globalMCPHubClient == nil {
+		http.Error(w, "MCP hub client not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	if err := globalMCPHubClient.SyncToRegistry(ctx, s.hub); err != nil {
+		http.Error(w, fmt.Sprintf("sync failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"status":  "synced",
+		"message": "MCP tools synchronized to Tibrain registry",
+	})
+}
+
+// handleMCPHubBatchCall - Call multiple MCP tools in batch
+func (s *Server) handleMCPHubBatchCall(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	if globalMCPHubClient == nil {
+		http.Error(w, "MCP hub client not initialized", http.StatusServiceUnavailable)
+		return
+	}
+
+	var requests []MCPToolCall
+	if err := json.NewDecoder(r.Body).Decode(&requests); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	results, err := globalMCPHubClient.BatchCallTools(ctx, requests)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("batch call failed: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"results": results,
+		"count":   len(results),
+	})
+}
+
 func main() {
 	config := loadConfig()
 
 	logger = NewLogger(LogLevelInfo, "TIBRAIN")
 	logger.Info("TiBrain starting with data dir: %s", config.DataDir)
+	setExecutionPlaneAllowedRoots(config.AllowedRoots)
 
 	for i, arg := range os.Args {
 		if arg == "--port" && i+1 < len(os.Args) {
@@ -2040,12 +2427,27 @@ func main() {
 		}
 	}
 
+	// ── 1MCP Proxy Manager ─────────────────────────────────────────────
+	// as a sub-process and reverse-proxies /mcp traffic to it.
+
 	hub, err := NewHub(config.DataDir)
 	if err != nil {
 		logger.Error("Failed to initialize hub: %v", err)
 		os.Exit(1)
 	}
 	defer hub.Close()
+
+	// Initialize code graph service
+	codeGraphService := NewCodeGraphService(hub)
+	// Build or update the code graph on startup in background
+	go func() {
+		if err := codeGraphService.BuildOrUpdateGraph(); err != nil {
+			logger.Warn("Failed to build/update code graph: %v", err)
+		} else {
+			logger.Info("Code graph initialized successfully")
+		}
+	}()
+	// Note: We're not deferring Close() on codeGraphService as it uses the same hub
 
 	if config.IndexKnowledge {
 		indexer := NewKnowledgeIndexer(hub)
@@ -2079,101 +2481,40 @@ func main() {
 		// Continue anyway, tools can be registered later
 	}
 
-	// Initialize Neo4j Graph Store
-	var graphStore *Neo4jGraphStore
-	neo4jConfig := Neo4jConfig{
-		URI:      getEnvOrDefault("NEO4J_URI", "bolt://localhost:7687"),
-		Username: getEnvOrDefault("NEO4J_USER", "neo4j"),
-		Password: getEnvOrDefault("NEO4J_PASSWORD", "password"),
-		Database: getEnvOrDefault("NEO4J_DATABASE", "neo4j"),
-		MaxDepth: 3,
-	}
-
-	// Attempt to initialize Neo4j - continue without if not available
-	graphStore, err = NewNeo4jGraphStore(neo4jConfig)
-	if err != nil {
-		logger.Warn("Neo4j not available, continuing without graph store: %v", err)
-		graphStore = nil
-	} else {
-		defer graphStore.Close(context.Background())
-		logger.Info("Neo4j graph store initialized successfully")
-	}
-
-	// Initialize Cognitive Memory Manager.
-	// graphAdapter wraps *Neo4jGraphStore to satisfy memory.GraphStore (whose
-	// interface uses `any` for the node argument, to avoid a hard dependency
-	// on memory.GraphNode).
-	graphAdapter := memoryGraphAdapter{gs: graphStore}
-	cognitiveMemory := memory.NewCognitiveMemoryManager(hub, graphAdapter)
+	cognitiveMemory := memory.NewCognitiveMemoryManager(hub, nil)
 	logger.Info("Cognitive memory manager initialized")
 
 	// Initialize Retrieval Router with Graph support
-	retrievalRouter := NewRetrievalRouterWithGraph(hub, graphStore)
+	retrievalRouter := NewRetrievalRouter(hub)
 
 	// Initialize Ti Agent Orchestrator with all components
 	tiAgentOrchestrator := NewTiAgentOrchestrator(hub, retrievalRouter)
 	tiAgentOrchestrator.cognitiveMemory = cognitiveMemory // Inject cognitive memory
 
+	// Initialize MCP Hub Client (connect to apps/tibrain/mcp proxy)
+	defaultURL := "http://localhost:1840"
+	if config.MCP.InternalHubURL != "" {
+		defaultURL = config.MCP.InternalHubURL
+	}
+	mcpHubURL := getEnvOrDefault("MCP_HUB_URL", defaultURL)
+	mcpHubAPIKey := os.Getenv("MCP_HUB_API_KEY")
+	mcpHubClient := NewMCPHubClient(mcpHubURL, mcpHubAPIKey)
+
 	// Store references for HTTP handlers
-	globalGraphStore = graphStore
 	globalCognitiveMemory = cognitiveMemory
 	globalRetrievalRouter = retrievalRouter
+	globalTiAgentOrchestrator = tiAgentOrchestrator
+	globalMCPHubClient = mcpHubClient
 
 	server := NewServer(hub, config)
 
-	http.HandleFunc("/v1/tibrain/cli/register", server.handleRegisterCLI)
-	http.HandleFunc("/v1/tibrain/cli/unregister", server.handleUnregisterCLI)
-	http.HandleFunc("/v1/tibrain/cli/list", server.handleListCLIs)
-	http.HandleFunc("/v1/tibrain/cli/heartbeat", server.handleHeartbeat)
+	// Initialize Embedded MCP Server
+	mcpManager := NewMCPServerManager(hub, fmt.Sprintf("http://127.0.0.1:%d", config.Port), mcpHubClient, config)
 
-	http.HandleFunc("/v1/tibrain/handoff/create", server.handleCreateGlobalHandoff)
-	http.HandleFunc("/v1/tibrain/handoff/recall", server.handleRecallGlobalHandoff)
-	http.HandleFunc("/v1/tibrain/handoffs", server.handleListHandoffs)
-
-	http.HandleFunc("/v1/tibrain/mcp/register", server.handleRegisterMCP)
-	http.HandleFunc("/v1/tibrain/mcp/list", server.handleListMCPs)
-	http.HandleFunc("/v1/tibrain/mcp", server.handleGetMCP)
-	http.HandleFunc("/v1/tibrain/mcp/sync", server.handleSyncMCPTools)
-
-	// MCP Hub API
-	http.HandleFunc("/v1/tibrain/mcp-hub/sync", server.handleMCPHubSync)
-	http.HandleFunc("/v1/tibrain/mcp-hub/list", server.handleMCPHubList)
-	http.HandleFunc("/v1/tibrain/mcp-hub", server.handleMCPHubGet)
-	http.HandleFunc("/v1/tibrain/mcp-hub/register", server.handleMCPHubRegister)
-
-	http.HandleFunc("/v1/tibrain/tool/register", server.handleRegisterTool)
-	http.HandleFunc("/v1/tibrain/tool/list", server.handleListTools)
-	http.HandleFunc("/v1/tibrain/tool", server.handleGetTool)
-	http.HandleFunc("/v1/tibrain/tool/execute", server.handleExecuteTool)
-	http.HandleFunc("/v1/tibrain/tool/logs", server.handleGetToolUsageLogs)
-
-	// Cognitive Memory API
-	http.HandleFunc("/v1/tibrain/memory/store", server.handleStoreMemory)
-	http.HandleFunc("/v1/tibrain/memory/query", server.handleQueryMemory)
-	http.HandleFunc("/v1/tibrain/memory/stats", server.handleMemoryStats)
-	http.HandleFunc("/v1/tibrain/memory/recent", server.handleRecentExperience)
-
-	// Natural Language Interaction API
-	http.HandleFunc("/v1/tibrain/chat", server.handleChat)
-	http.HandleFunc("/v1/tibrain/agent/process", server.handleAgentProcess)
-
-	// BEADS LEARN Stats API
-	http.HandleFunc("/v1/tibrain/beads/stats", server.handleUpdateModelStats)
-	http.HandleFunc("/v1/tibrain/beads/stats/get", server.handleGetModelStats)
-	http.HandleFunc("/v1/tibrain/beads/stats/best", server.handleGetBestModel)
-	http.HandleFunc("/v1/tibrain/beads/stats/trend", server.handleGetQualityTrend)
-	http.HandleFunc("/v1/tibrain/beads/stats/all", server.handleGetAllModelStats)
-
-	http.HandleFunc("/v1/tibrain/status", server.handleStatus)
-	http.HandleFunc("/health", server.handleStatus)
-
-	// Notion Sync API
-	http.HandleFunc("/v1/tibrain/sync/notion", server.handleNotionSync)
+	// Handlers are now registered via the mux below
 
 	integrationManager := NewIntegrationManager(hub)
 	apiServer := NewAPIServer(hub, integrationManager)
-	http.Handle("/api/", apiServer)
-
 	// TODO: Re-enable when RAG and CLI Context handlers are implemented
 	// server.setupRAGHandlers()
 	// server.setupCLIContextHandlers()
@@ -2194,8 +2535,65 @@ func main() {
 	logger.Info("Status: http://localhost%s/v1/tibrain/status", addr)
 	logger.Info("Integration API: http://localhost%s/api/status", addr)
 
+	mux := http.NewServeMux()
+	mux.HandleFunc("/mcp/sse", mcpManager.HandleSSE)
+	mux.HandleFunc("/mcp/message", mcpManager.HandleMessage)
+	// CLI Registry Handlers
+	mux.HandleFunc("/register-cli", server.handleRegisterCLI)
+	mux.HandleFunc("/unregister-cli", server.handleUnregisterCLI)
+	mux.HandleFunc("/list-clis", server.handleListCLIs)
+	mux.HandleFunc("/heartbeat", server.handleHeartbeat)
+	// Global Handoff Handlers
+	mux.HandleFunc("/create-handoff", server.handleCreateGlobalHandoff)
+	mux.HandleFunc("/recall-handoff", server.handleRecallGlobalHandoff)
+	mux.HandleFunc("/list-handoffs", server.handleListHandoffs)
+	// MCP Registry Handlers
+	mux.HandleFunc("/register-mcp", server.handleRegisterMCP)
+	mux.HandleFunc("/list-mcps", server.handleListMCPs)
+	mux.HandleFunc("/get-mcp", server.handleGetMCP)
+	mux.HandleFunc("/sync-mcp-tools", server.handleSyncMCPTools)
+	// Tool Registry Handlers
+	mux.HandleFunc("/register-tool", server.handleRegisterTool)
+	mux.HandleFunc("/list-tools", server.handleListTools)
+	mux.HandleFunc("/get-tool", server.handleGetTool)
+	mux.HandleFunc("/execute-tool", server.handleExecuteTool)
+	mux.HandleFunc("/tool-usage-logs", server.handleGetToolUsageLogs)
+	// BEADS LEARN Stats Handlers
+	mux.HandleFunc("/update-model-stats", server.handleUpdateModelStats)
+	mux.HandleFunc("/get-model-stats", server.handleGetModelStats)
+	mux.HandleFunc("/get-best-model", server.handleGetBestModel)
+	mux.HandleFunc("/get-quality-trend", server.handleGetQualityTrend)
+	mux.HandleFunc("/get-all-model-stats", server.handleGetAllModelStats)
+	// Cognitive Memory Handlers
+	mux.HandleFunc("/store-memory", server.handleStoreMemory)
+	mux.HandleFunc("/query-memory", server.handleQueryMemory)
+	mux.HandleFunc("/memory-stats", server.handleMemoryStats)
+	mux.HandleFunc("/recent-experience", server.handleRecentExperience)
+	// Natural Language Interaction Handlers
+	mux.HandleFunc("/chat", server.handleChat)
+	mux.HandleFunc("/agent-process", server.handleAgentProcess)
+	// Notion Sync Handler
+	mux.HandleFunc("/notion-sync", server.handleNotionSync)
+	// Status and Ready Handlers
+	mux.HandleFunc("/health", apiServer.healthHandler)
+	mux.HandleFunc("/status", server.handleStatus)
+	mux.HandleFunc("/v1/tibrain/status", server.handleStatus)
+	mux.HandleFunc("/ready", server.handleReady)
+	// Overview Handler
+	mux.HandleFunc("/api/overview", server.handleOverviewJSON)
+	mux.HandleFunc("/overview", server.handleOverview)
+	mux.Handle("/api/", apiServer)
+
+	// MCP Hub Handlers - Connect to apps/tibrain/mcp proxy
+	mux.HandleFunc("/mcp-hub/servers", server.handleMCPHubServers)
+	mux.HandleFunc("/mcp-hub/tools", server.handleMCPHubTools)
+	mux.HandleFunc("/mcp-hub/call", server.handleMCPHubCall)
+	mux.HandleFunc("/mcp-hub/batch-call", server.handleMCPHubBatchCall)
+	mux.HandleFunc("/sync-mcp-hub", server.handleSyncMCPHub)
+
 	srv := &http.Server{
 		Addr:         addr,
+		Handler:      mux,
 		ReadTimeout:  15 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  60 * time.Second,
@@ -2207,6 +2605,8 @@ func main() {
 	go func() {
 		<-sigCh
 		logger.Info("Shutting down gracefully...")
+
+		// Stop managed 1MCP process first
 
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()

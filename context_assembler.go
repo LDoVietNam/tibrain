@@ -7,8 +7,8 @@ import (
 
 // ContextAssembler builds the prompt context from retrieved chunks
 type ContextAssembler struct {
-	maxTokens   int
-	separator   string
+	maxTokens int
+	separator string
 }
 
 func NewContextAssembler() *ContextAssembler {
@@ -20,8 +20,8 @@ func NewContextAssembler() *ContextAssembler {
 
 // AssembledContext holds the final context and source mapping
 type AssembledContext struct {
-	Text    string
-	Sources []ContextSource
+	Text       string
+	Sources    []ContextSource
 	TokenCount int
 }
 

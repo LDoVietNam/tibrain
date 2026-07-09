@@ -69,7 +69,7 @@ Z:\10_WORKPLACE\Ti\
 - Moved Ti CLI to apps/cli/
 - Organized TiCrew system under apps/ticrew/
 - Preserved Ti-learning-lab in original location
-- Set up MCP integration in apps/mcp/
+- Set up MCP integration in apps/tibrain/mcp/
 
 ### ✅ Phase 3: Content Consolidation
 - Moved skills to content/skills/

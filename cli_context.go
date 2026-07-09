@@ -18,16 +18,16 @@ import (
 
 // CLIContext represents a context entry
 type CLIContext struct {
-	ID          string    `json:"id"`
-	CLIID       string    `json:"cli_id"`
-	ContextType string    `json:"context_type"` // config, help, cache, preference
-	Key         string    `json:"key"`
-	Value       string    `json:"value"`
-	Metadata    string    `json:"metadata"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
-	ExpiresAt   *time.Time `json:"expires_at,omitempty"`
-	AccessCount int       `json:"access_count"`
+	ID           string     `json:"id"`
+	CLIID        string     `json:"cli_id"`
+	ContextType  string     `json:"context_type"` // config, help, cache, preference
+	Key          string     `json:"key"`
+	Value        string     `json:"value"`
+	Metadata     string     `json:"metadata"`
+	CreatedAt    time.Time  `json:"created_at"`
+	UpdatedAt    time.Time  `json:"updated_at"`
+	ExpiresAt    *time.Time `json:"expires_at,omitempty"`
+	AccessCount  int        `json:"access_count"`
 	LastAccessed *time.Time `json:"last_accessed,omitempty"`
 }
 
@@ -73,9 +73,9 @@ type CLIPreference struct {
 // ─────────────────────────────────────────────────────────────
 
 type CLIContextManager struct {
-	hub    *Hub
-	cache  *sync.Map // L1 cache for hot data
-	mutex  sync.RWMutex
+	hub   *Hub
+	cache *sync.Map // L1 cache for hot data
+	mutex sync.RWMutex
 }
 
 func NewCLIContextManager(hub *Hub) *CLIContextManager {
@@ -93,14 +93,14 @@ func NewCLIContextManager(hub *Hub) *CLIContextManager {
 func (cm *CLIContextManager) SetContext(cliID, contextType, key, value string, metadata map[string]string, ttl time.Duration) error {
 	timestamp := time.Now().Unix()
 	var expiresAt *int64
-	
+
 	if ttl > 0 {
 		exp := time.Now().Add(ttl).Unix()
 		expiresAt = &exp
 	}
-	
+
 	metadataJSON, _ := json.Marshal(metadata)
-	
+
 	_, err := cm.hub.db.Exec(`
 		INSERT OR REPLACE INTO cli_context 
 		(id, cli_id, context_type, key, value, metadata, created_at, updated_at, expires_at, access_count, last_accessed)
@@ -108,15 +108,15 @@ func (cm *CLIContextManager) SetContext(cliID, contextType, key, value string, m
 	`,
 		generateID(), cliID, contextType, key, value, string(metadataJSON),
 		timestamp, timestamp, expiresAt, timestamp)
-	
+
 	if err != nil {
 		return fmt.Errorf("set context: %w", err)
 	}
-	
+
 	// Update L1 cache
 	cacheKey := fmt.Sprintf("%s:%s:%s", cliID, contextType, key)
 	cm.cache.Store(cacheKey, value)
-	
+
 	logger.Info("CLI context set: %s/%s/%s", cliID, contextType, key)
 	return nil
 }
@@ -135,11 +135,11 @@ func (cm *CLIContextManager) GetContext(cliID, contextType, key string) (*CLICon
 			Value:       cached.(string),
 		}, nil
 	}
-	
+
 	var ctx CLIContext
 	var createdAt, updatedAt, lastAccessed int64
 	var expiresAt sql.NullInt64
-	
+
 	err := cm.hub.db.QueryRow(`
 		SELECT id, cli_id, context_type, key, value, metadata, 
 		       created_at, updated_at, expires_at, access_count, last_accessed
@@ -149,11 +149,11 @@ func (cm *CLIContextManager) GetContext(cliID, contextType, key string) (*CLICon
 	`, cliID, contextType, key, time.Now().Unix()).Scan(
 		&ctx.ID, &ctx.CLIID, &ctx.ContextType, &ctx.Key, &ctx.Value, &ctx.Metadata,
 		&createdAt, &updatedAt, &expiresAt, &ctx.AccessCount, &lastAccessed)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("get context: %w", err)
 	}
-	
+
 	ctx.CreatedAt = time.Unix(createdAt, 0)
 	ctx.UpdatedAt = time.Unix(updatedAt, 0)
 	if lastAccessed > 0 {
@@ -164,11 +164,11 @@ func (cm *CLIContextManager) GetContext(cliID, contextType, key string) (*CLICon
 		t := time.Unix(expiresAt.Int64, 0)
 		ctx.ExpiresAt = &t
 	}
-	
+
 	// Update cache and access count
 	cm.cache.Store(cacheKey, ctx.Value)
 	go cm.updateAccessCount(cliID, contextType, key)
-	
+
 	return &ctx, nil
 }
 
@@ -177,15 +177,15 @@ func (cm *CLIContextManager) DeleteContext(cliID, contextType, key string) error
 	_, err := cm.hub.db.Exec(`
 		DELETE FROM cli_context WHERE cli_id = ? AND context_type = ? AND key = ?
 	`, cliID, contextType, key)
-	
+
 	if err != nil {
 		return fmt.Errorf("delete context: %w", err)
 	}
-	
+
 	// Remove from cache
 	cacheKey := fmt.Sprintf("%s:%s:%s", cliID, contextType, key)
 	cm.cache.Delete(cacheKey)
-	
+
 	logger.Info("CLI context deleted: %s/%s/%s", cliID, contextType, key)
 	return nil
 }
@@ -200,33 +200,33 @@ func (cm *CLIContextManager) ListContexts(cliID, contextType string) ([]CLIConte
 		WHERE cli_id = ?
 	`
 	args = append(args, cliID)
-	
+
 	if contextType != "" {
 		query += " AND context_type = ?"
 		args = append(args, contextType)
 	}
-	
+
 	query += " ORDER BY updated_at DESC"
-	
+
 	rows, err := cm.hub.db.Query(query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("list contexts: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var contexts []CLIContext
 	for rows.Next() {
 		var ctx CLIContext
 		var createdAt, updatedAt, lastAccessed int64
 		var expiresAt sql.NullInt64
-		
+
 		err := rows.Scan(
 			&ctx.ID, &ctx.CLIID, &ctx.ContextType, &ctx.Key, &ctx.Value, &ctx.Metadata,
 			&createdAt, &updatedAt, &expiresAt, &ctx.AccessCount, &lastAccessed)
 		if err != nil {
 			return nil, fmt.Errorf("scan context: %w", err)
 		}
-		
+
 		ctx.CreatedAt = time.Unix(createdAt, 0)
 		ctx.UpdatedAt = time.Unix(updatedAt, 0)
 		if lastAccessed > 0 {
@@ -237,10 +237,10 @@ func (cm *CLIContextManager) ListContexts(cliID, contextType string) ([]CLIConte
 			t := time.Unix(expiresAt.Int64, 0)
 			ctx.ExpiresAt = &t
 		}
-		
+
 		contexts = append(contexts, ctx)
 	}
-	
+
 	return contexts, nil
 }
 
@@ -253,12 +253,12 @@ func (cm *CLIContextManager) SetCache(query, response string, confidence float64
 	queryHash := generateQueryHash(query)
 	timestamp := time.Now().Unix()
 	var expiresAt *int64
-	
+
 	if ttl > 0 {
 		exp := time.Now().Add(ttl).Unix()
 		expiresAt = &exp
 	}
-	
+
 	_, err := cm.hub.db.Exec(`
 		INSERT OR REPLACE INTO cli_query_cache 
 		(id, query_hash, query, response, confidence, source_type, created_at, expires_at, hit_count, last_hit)
@@ -266,14 +266,14 @@ func (cm *CLIContextManager) SetCache(query, response string, confidence float64
 	`,
 		generateID(), queryHash, query, response, confidence, sourceType,
 		timestamp, expiresAt, timestamp)
-	
+
 	if err != nil {
 		return fmt.Errorf("set cache: %w", err)
 	}
-	
+
 	// Update L1 cache
 	cm.cache.Store("cache:"+queryHash, response)
-	
+
 	logger.Info("CLI cache set: %s (source: %s)", queryHash[:8], sourceType)
 	return nil
 }
@@ -281,7 +281,7 @@ func (cm *CLIContextManager) SetCache(query, response string, confidence float64
 // GetCache retrieves a cached query result
 func (cm *CLIContextManager) GetCache(query string) (*CLICacheEntry, error) {
 	queryHash := generateQueryHash(query)
-	
+
 	// Try L1 cache first
 	if cached, ok := cm.cache.Load("cache:" + queryHash); ok {
 		// Update hit count asynchronously
@@ -292,11 +292,11 @@ func (cm *CLIContextManager) GetCache(query string) (*CLICacheEntry, error) {
 			Response:  cached.(string),
 		}, nil
 	}
-	
+
 	var entry CLICacheEntry
 	var createdAt, lastHit int64
 	var expiresAt sql.NullInt64
-	
+
 	err := cm.hub.db.QueryRow(`
 		SELECT id, query_hash, query, response, confidence, source_type,
 		       created_at, expires_at, hit_count, last_hit
@@ -305,11 +305,11 @@ func (cm *CLIContextManager) GetCache(query string) (*CLICacheEntry, error) {
 	`, queryHash, time.Now().Unix()).Scan(
 		&entry.ID, &entry.QueryHash, &entry.Query, &entry.Response, &entry.Confidence, &entry.SourceType,
 		&createdAt, &expiresAt, &entry.HitCount, &lastHit)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("get cache: %w", err)
 	}
-	
+
 	entry.CreatedAt = time.Unix(createdAt, 0)
 	if lastHit > 0 {
 		t := time.Unix(lastHit, 0)
@@ -319,11 +319,11 @@ func (cm *CLIContextManager) GetCache(query string) (*CLICacheEntry, error) {
 		t := time.Unix(expiresAt.Int64, 0)
 		entry.ExpiresAt = &t
 	}
-	
+
 	// Update cache and hit count
 	cm.cache.Store("cache:"+queryHash, entry.Response)
 	go cm.updateCacheHitCount(queryHash)
-	
+
 	return &entry, nil
 }
 
@@ -332,14 +332,14 @@ func (cm *CLIContextManager) ClearCache() error {
 	result, err := cm.hub.db.Exec(`
 		DELETE FROM cli_query_cache WHERE expires_at IS NOT NULL AND expires_at <= ?
 	`, time.Now().Unix())
-	
+
 	if err != nil {
 		return fmt.Errorf("clear cache: %w", err)
 	}
-	
+
 	rowsAffected, _ := result.RowsAffected()
 	logger.Info("CLI cache cleared: %d expired entries removed", rowsAffected)
-	
+
 	return nil
 }
 
@@ -350,18 +350,18 @@ func (cm *CLIContextManager) ClearCache() error {
 // AddHelp adds help documentation
 func (cm *CLIContextManager) AddHelp(command, topic, content, keywords, category string, priority int) error {
 	timestamp := time.Now().Unix()
-	
+
 	_, err := cm.hub.db.Exec(`
 		INSERT OR REPLACE INTO cli_help_index 
 		(id, command, topic, content, keywords, category, priority, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`,
 		generateID(), command, topic, content, keywords, category, priority, timestamp, timestamp)
-	
+
 	if err != nil {
 		return fmt.Errorf("add help: %w", err)
 	}
-	
+
 	logger.Info("CLI help added: %s/%s", command, topic)
 	return nil
 }
@@ -370,7 +370,7 @@ func (cm *CLIContextManager) AddHelp(command, topic, content, keywords, category
 func (cm *CLIContextManager) SearchHelp(query string, limit int) ([]CLIHelpEntry, error) {
 	// Simple text search for now
 	searchPattern := "%" + query + "%"
-	
+
 	rows, err := cm.hub.db.Query(`
 		SELECT id, command, topic, content, keywords, category, priority, created_at, updated_at
 		FROM cli_help_index 
@@ -378,29 +378,29 @@ func (cm *CLIContextManager) SearchHelp(query string, limit int) ([]CLIHelpEntry
 		ORDER BY priority DESC, updated_at DESC
 		LIMIT ?
 	`, searchPattern, searchPattern, searchPattern, searchPattern, limit)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("search help: %w", err)
 	}
 	defer rows.Close()
-	
+
 	var entries []CLIHelpEntry
 	for rows.Next() {
 		var entry CLIHelpEntry
 		var createdAt, updatedAt int64
-		
+
 		err := rows.Scan(
 			&entry.ID, &entry.Command, &entry.Topic, &entry.Content, &entry.Keywords,
 			&entry.Category, &entry.Priority, &createdAt, &updatedAt)
 		if err != nil {
 			return nil, fmt.Errorf("scan help entry: %w", err)
 		}
-		
+
 		entry.CreatedAt = time.Unix(createdAt, 0)
 		entry.UpdatedAt = time.Unix(updatedAt, 0)
 		entries = append(entries, entry)
 	}
-	
+
 	return entries, nil
 }
 
@@ -411,22 +411,22 @@ func (cm *CLIContextManager) SearchHelp(query string, limit int) ([]CLIHelpEntry
 // SetPreference sets a user preference
 func (cm *CLIContextManager) SetPreference(userID, key, value string) error {
 	timestamp := time.Now().Unix()
-	
+
 	_, err := cm.hub.db.Exec(`
 		INSERT OR REPLACE INTO cli_preferences 
 		(id, user_id, key, value, created_at, updated_at)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`,
 		generateID(), userID, key, value, timestamp, timestamp)
-	
+
 	if err != nil {
 		return fmt.Errorf("set preference: %w", err)
 	}
-	
+
 	// Update cache
 	cacheKey := fmt.Sprintf("pref:%s:%s", userID, key)
 	cm.cache.Store(cacheKey, value)
-	
+
 	logger.Info("CLI preference set: %s/%s", userID, key)
 	return nil
 }
@@ -442,27 +442,27 @@ func (cm *CLIContextManager) GetPreference(userID, key string) (*CLIPreference, 
 			Value:  cached.(string),
 		}, nil
 	}
-	
+
 	var pref CLIPreference
 	var createdAt, updatedAt int64
-	
+
 	err := cm.hub.db.QueryRow(`
 		SELECT id, user_id, key, value, created_at, updated_at
 		FROM cli_preferences 
 		WHERE user_id = ? AND key = ?
 	`, userID, key).Scan(
 		&pref.ID, &pref.UserID, &pref.Key, &pref.Value, &createdAt, &updatedAt)
-	
+
 	if err != nil {
 		return nil, fmt.Errorf("get preference: %w", err)
 	}
-	
+
 	pref.CreatedAt = time.Unix(createdAt, 0)
 	pref.UpdatedAt = time.Unix(updatedAt, 0)
-	
+
 	// Update cache
 	cm.cache.Store(cacheKey, pref.Value)
-	
+
 	return &pref, nil
 }
 
@@ -476,7 +476,7 @@ func (cm *CLIContextManager) updateAccessCount(cliID, contextType, key string) {
 		SET access_count = access_count + 1, last_accessed = ?
 		WHERE cli_id = ? AND context_type = ? AND key = ?
 	`, time.Now().Unix(), cliID, contextType, key)
-	
+
 	if err != nil {
 		logger.Warn("Failed to update access count: %v", err)
 	}
@@ -488,7 +488,7 @@ func (cm *CLIContextManager) updateCacheHitCount(queryHash string) {
 		SET hit_count = hit_count + 1, last_hit = ?
 		WHERE query_hash = ?
 	`, time.Now().Unix(), queryHash)
-	
+
 	if err != nil {
 		logger.Warn("Failed to update cache hit count: %v", err)
 	}
@@ -517,37 +517,37 @@ func (h *Hub) setupCLIContextHandlers() {
 				Metadata    map[string]string `json:"metadata,omitempty"`
 				TTL         int               `json:"ttl,omitempty"` // seconds
 			}
-			
+
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				http.Error(w, "Invalid request body", http.StatusBadRequest)
 				return
 			}
-			
+
 			ttl := time.Duration(req.TTL) * time.Second
 			if err := contextManager.SetContext(req.CLIID, req.ContextType, req.Key, req.Value, req.Metadata, ttl); err != nil {
 				http.Error(w, fmt.Sprintf("Set context error: %v", err), http.StatusInternalServerError)
 				return
 			}
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-			
+
 		case "GET":
 			cliID := r.URL.Query().Get("cli_id")
 			contextType := r.URL.Query().Get("type")
 			key := r.URL.Query().Get("key")
-			
+
 			if cliID == "" || key == "" {
 				http.Error(w, "cli_id and key required", http.StatusBadRequest)
 				return
 			}
-			
+
 			ctx, err := contextManager.GetContext(cliID, contextType, key)
 			if err != nil {
 				http.Error(w, fmt.Sprintf("Get context error: %v", err), http.StatusInternalServerError)
 				return
 			}
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(ctx)
 		}
@@ -564,34 +564,34 @@ func (h *Hub) setupCLIContextHandlers() {
 				SourceType string  `json:"source_type"`
 				TTL        int     `json:"ttl,omitempty"`
 			}
-			
+
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				http.Error(w, "Invalid request body", http.StatusBadRequest)
 				return
 			}
-			
+
 			ttl := time.Duration(req.TTL) * time.Second
 			if err := contextManager.SetCache(req.Query, req.Response, req.Confidence, req.SourceType, ttl); err != nil {
 				http.Error(w, fmt.Sprintf("Set cache error: %v", err), http.StatusInternalServerError)
 				return
 			}
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-			
+
 		case "GET":
 			query := r.URL.Query().Get("query")
 			if query == "" {
 				http.Error(w, "query required", http.StatusBadRequest)
 				return
 			}
-			
+
 			entry, err := contextManager.GetCache(query)
 			if err != nil {
 				http.Error(w, fmt.Sprintf("Get cache error: %v", err), http.StatusInternalServerError)
 				return
 			}
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(entry)
 		}
@@ -601,24 +601,24 @@ func (h *Hub) setupCLIContextHandlers() {
 	http.HandleFunc("/cli/help", func(w http.ResponseWriter, r *http.Request) {
 		query := r.URL.Query().Get("q")
 		limit := 5
-		
+
 		if limitStr := r.URL.Query().Get("limit"); limitStr != "" {
 			if parsedLimit, err := strconv.Atoi(limitStr); err == nil {
 				limit = parsedLimit
 			}
 		}
-		
+
 		if query == "" {
 			http.Error(w, "query required", http.StatusBadRequest)
 			return
 		}
-		
+
 		entries, err := contextManager.SearchHelp(query, limit)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Search help error: %v", err), http.StatusInternalServerError)
 			return
 		}
-		
+
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(entries)
 	})
@@ -632,35 +632,35 @@ func (h *Hub) setupCLIContextHandlers() {
 				Key    string `json:"key"`
 				Value  string `json:"value"`
 			}
-			
+
 			if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 				http.Error(w, "Invalid request body", http.StatusBadRequest)
 				return
 			}
-			
+
 			if err := contextManager.SetPreference(req.UserID, req.Key, req.Value); err != nil {
 				http.Error(w, fmt.Sprintf("Set preference error: %v", err), http.StatusInternalServerError)
 				return
 			}
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(map[string]string{"status": "success"})
-			
+
 		case "GET":
 			userID := r.URL.Query().Get("user_id")
 			key := r.URL.Query().Get("key")
-			
+
 			if userID == "" || key == "" {
 				http.Error(w, "user_id and key required", http.StatusBadRequest)
 				return
 			}
-			
+
 			pref, err := contextManager.GetPreference(userID, key)
 			if err != nil {
 				http.Error(w, fmt.Sprintf("Get preference error: %v", err), http.StatusInternalServerError)
 				return
 			}
-			
+
 			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(pref)
 		}

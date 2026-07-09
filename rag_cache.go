@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"crypto/sha256"
-	"encoding/json"
 	"encoding/hex"
+	"encoding/json"
 	"strings"
 	"sync"
 	"time"

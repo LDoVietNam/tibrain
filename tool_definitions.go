@@ -126,6 +126,23 @@ func DefaultToolDefinitions() []ToolDefinition {
 			Permissions: []string{"devin", "claude", "cursor"},
 		},
 		{
+			ID:          "tool-list-directory",
+			Name:        "list_directory",
+			Description: "List directory contents",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"dir_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Directory path",
+					},
+				},
+				"required": []string{"dir_path"},
+			},
+			Category:    "file",
+			Permissions: []string{"devin", "claude", "cursor"},
+		},
+		{
 			ID:          "tool-file-info",
 			Name:        "file_info",
 			Description: "Get file metadata",
@@ -138,6 +155,82 @@ func DefaultToolDefinitions() []ToolDefinition {
 					},
 				},
 				"required": []string{"file_path"},
+			},
+			Category:    "file",
+			Permissions: []string{"devin", "claude", "cursor"},
+		},
+		{
+			ID:          "tool-get-file-info",
+			Name:        "get_file_info",
+			Description: "Get file metadata",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"file_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Absolute path to file",
+					},
+				},
+				"required": []string{"file_path"},
+			},
+			Category:    "file",
+			Permissions: []string{"devin", "claude", "cursor"},
+		},
+		{
+			ID:          "tool-create-directory",
+			Name:        "create_directory",
+			Description: "Create a directory path",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"dir_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Directory path",
+					},
+				},
+				"required": []string{"dir_path"},
+			},
+			Category:    "file",
+			Permissions: []string{"devin", "claude", "cursor"},
+		},
+		{
+			ID:          "tool-file-exists",
+			Name:        "file_exists",
+			Description: "Check whether a file or directory exists",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"file_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Absolute path to file or directory",
+					},
+				},
+				"required": []string{"file_path"},
+			},
+			Category:    "file",
+			Permissions: []string{"devin", "claude", "cursor"},
+		},
+		{
+			ID:          "tool-walk-directory",
+			Name:        "walk_directory",
+			Description: "Recursively walk a directory",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"dir_path": map[string]interface{}{
+						"type":        "string",
+						"description": "Directory path",
+					},
+					"max_depth": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum depth to recurse",
+					},
+					"max_entries": map[string]interface{}{
+						"type":        "integer",
+						"description": "Maximum entries to return",
+					},
+				},
+				"required": []string{"dir_path"},
 			},
 			Category:    "file",
 			Permissions: []string{"devin", "claude", "cursor"},
@@ -241,7 +334,7 @@ func DefaultToolDefinitions() []ToolDefinition {
 		{
 			ID:          "tool-run-command",
 			Name:        "run_command",
-			Description: "Execute shell command",
+			Description: "Execute shell command (legacy alias for exec)",
 			Parameters: map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
@@ -249,8 +342,83 @@ func DefaultToolDefinitions() []ToolDefinition {
 						"type":        "string",
 						"description": "Command to execute",
 					},
+					"working_dir": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional working directory",
+					},
+					"wait": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Wait for process completion",
+					},
+					"timeout_ms": map[string]interface{}{
+						"type":        "integer",
+						"description": "Timeout in milliseconds",
+					},
 				},
 				"required": []string{"command"},
+			},
+			Category:    "system",
+			Permissions: []string{"devin"},
+		},
+		{
+			ID:          "tool-exec",
+			Name:        "exec",
+			Description: "Execute a shell command and return stdout/stderr/exitCode",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"command": map[string]interface{}{
+						"type":        "string",
+						"description": "Command to execute",
+					},
+					"working_dir": map[string]interface{}{
+						"type":        "string",
+						"description": "Optional working directory",
+					},
+					"wait": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Wait for process completion",
+					},
+					"timeout_ms": map[string]interface{}{
+						"type":        "integer",
+						"description": "Timeout in milliseconds",
+					},
+				},
+				"required": []string{"command"},
+			},
+			Category:    "system",
+			Permissions: []string{"devin"},
+		},
+		{
+			ID:          "tool-exec-status",
+			Name:        "exec_status",
+			Description: "Get the status of a tracked exec job",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"exec_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Execution job id",
+					},
+				},
+				"required": []string{"exec_id"},
+			},
+			Category:    "system",
+			Permissions: []string{"devin"},
+		},
+		{
+			ID:          "tool-exec-cancel",
+			Name:        "exec_cancel",
+			Description: "Cancel a tracked exec job",
+			Parameters: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"exec_id": map[string]interface{}{
+						"type":        "string",
+						"description": "Execution job id",
+					},
+				},
+				"required": []string{"exec_id"},
 			},
 			Category:    "system",
 			Permissions: []string{"devin"},
@@ -3949,30 +4117,30 @@ func RegisterDefaultTools(hub *Hub) error {
 		}
 
 		toolReg := Tool{
-			ID:                   def.ID,
-			Name:                 def.Name,
-			Description:          def.Description,
-			Parameters:           string(parametersJSON),
-			Handler:              "router",
-			Category:             def.Category,
-			Permissions:          string(permissionsJSON),
-			Enabled:              true,
-			QualityScore:         80,
-			SecurityScore:        80,
-			BestPracticesScore:   80,
-			Source:               "best-source",
-			Family:               "",
-			Tags:                 "",
-			Version:              "",
-			SkillLevel:           "l2",
-			QualityTier:          "platinum",
-			SecurityTier:         "hardened",
-			SecurityStatus:       "passed",
-			ValidationStatus:     "passed",
-			VariantID:            "",
-			VariantLabel:         "",
-			SourceType:           "community",
-			RootPath:             "",
+			ID:                 def.ID,
+			Name:               def.Name,
+			Description:        def.Description,
+			Parameters:         string(parametersJSON),
+			Handler:            "local",
+			Category:           def.Category,
+			Permissions:        string(permissionsJSON),
+			Enabled:            true,
+			QualityScore:       80,
+			SecurityScore:      80,
+			BestPracticesScore: 80,
+			Source:             "best-source",
+			Family:             "",
+			Tags:               "",
+			Version:            "",
+			SkillLevel:         "l2",
+			QualityTier:        "platinum",
+			SecurityTier:       "hardened",
+			SecurityStatus:     "passed",
+			ValidationStatus:   "passed",
+			VariantID:          "",
+			VariantLabel:       "",
+			SourceType:         "community",
+			RootPath:           "",
 		}
 
 		err = hub.RegisterTool(toolReg)

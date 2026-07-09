@@ -39,13 +39,19 @@ Detailed system status.
 {
   "service": "TiBrain",
   "status": "active",
-  "timestamp": "2026-05-23T01:00:00Z",
+  "timestamp": "2026-07-01T03:11:57.5051414+07:00",
   "port": 1810,
-  "knowledge_base": {...},
-  "agents": {...},
-  "integration": "active",
-  "router_brain": {...},
-  "tools_registered": 15,
+  "knowledge_base": {
+    "indexed": true,
+    "knowledge_bases": 0,
+    "total_documents": 0
+  },
+  "agents": {
+    "active_agents": 1,
+    "total_agents": 1,
+    "agents": ["ti-brain"]
+  },
+  "tools_registered": 221,
   "orchestration": "ready"
 }
 ```
@@ -240,10 +246,10 @@ Get Obsidian vault integration status.
 ```json
 {
   "status": "configured",
-  "vault_path": "/path/to/vault",
-  "documents": 150,
+  "vault_path": null,
+  "documents": 0,
   "note": "Set OBSIDIAN_VAULT_PATH env var to enable auto-ingestion",
-  "timestamp": "2026-05-23T01:00:00Z"
+  "timestamp": "2026-07-01T03:11:57.5051414+07:00"
 }
 ```
 
@@ -683,5 +689,5 @@ For API issues:
 
 ---
 
-**Last Updated**: 2026-05-23
+**Last Updated**: 2026-07-01
 **API Version**: 1.0.0

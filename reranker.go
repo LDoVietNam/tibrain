@@ -8,17 +8,17 @@ import (
 
 // SearchResult holds a document with multiple scores
 type SearchResult struct {
-	Doc        RAGDocument
-	VectorScore float64
+	Doc          RAGDocument
+	VectorScore  float64
 	KeywordScore float64
 	FinalScore   float64
 }
 
 // HybridReranker combines vector and keyword scores with optional cross-attention weighting
 type HybridReranker struct {
-	vectorWeight float64
+	vectorWeight  float64
 	keywordWeight float64
-	threshold    float64
+	threshold     float64
 }
 
 func NewHybridReranker() *HybridReranker {
@@ -35,8 +35,8 @@ func (hr *HybridReranker) Rerank(vectorResults, keywordResults []RAGDocument, qu
 
 	for _, doc := range vectorResults {
 		merged[doc.ID] = &SearchResult{
-			Doc:         doc,
-			VectorScore: 0.8, // default high score from vector search
+			Doc:          doc,
+			VectorScore:  0.8, // default high score from vector search
 			KeywordScore: 0.0,
 		}
 	}

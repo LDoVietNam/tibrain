@@ -16,11 +16,11 @@ type OmniRouteKnowledgePack struct {
 }
 
 type OmniRouteKnowledgeRecord struct {
-	ID          string                           `json:"id"`
-	Name        string                           `json:"name"`
-	Alias       string                           `json:"alias"`
-	Auth        string                           `json:"auth"`
-	ModelsCount int                              `json:"modelsCount"`
+	ID          string                            `json:"id"`
+	Name        string                            `json:"name"`
+	Alias       string                            `json:"alias"`
+	Auth        string                            `json:"auth"`
+	ModelsCount int                               `json:"modelsCount"`
 	Models      []OmniRouteKnowledgeProviderModel `json:"models"`
 }
 
@@ -195,14 +195,14 @@ func (i *OmniRouteKnowledgeImporter) providerToDocument(baseName, filePath strin
 	}
 
 	metadata := map[string]interface{}{
-		"source_system": "OmniRoute",
-		"source_type":   "provider_knowledge_pack",
-		"provider_id":   provider.ID,
+		"source_system":  "OmniRoute",
+		"source_type":    "provider_knowledge_pack",
+		"provider_id":    provider.ID,
 		"provider_alias": provider.Alias,
-		"models_count":  provider.ModelsCount,
-		"file_path":     filePath,
-		"pack_name":     baseName,
-		"pack_meta":     meta,
+		"models_count":   provider.ModelsCount,
+		"file_path":      filePath,
+		"pack_name":      baseName,
+		"pack_meta":      meta,
 	}
 	metadataJSON, _ := json.Marshal(metadata)
 
@@ -261,12 +261,12 @@ func (i *OmniRouteKnowledgeImporter) providerToDocument(baseName, filePath strin
 func (i *OmniRouteKnowledgeImporter) summaryToDocument(baseName, filePath string, pack OmniRouteKnowledgePack) RAGDocument {
 	now := time.Now()
 	metaJSON, _ := json.Marshal(map[string]interface{}{
-		"source_system": "OmniRoute",
-		"source_type":   "provider_knowledge_summary",
-		"file_path":     filePath,
-		"pack_name":     baseName,
+		"source_system":   "OmniRoute",
+		"source_type":     "provider_knowledge_summary",
+		"file_path":       filePath,
+		"pack_name":       baseName,
 		"providers_count": len(pack.Providers),
-		"pack_meta":     pack.Meta,
+		"pack_meta":       pack.Meta,
 	})
 
 	lines := []string{

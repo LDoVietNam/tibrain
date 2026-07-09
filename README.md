@@ -5,7 +5,7 @@ Minimal startup guide for the standalone TiBrain service.
 ## Start
 
 ```powershell
-cd Z:\01_PROJECTS\tibrain
+cd Z:\01_PROJECTS\apps\tibrain
 .\tibrain.exe --port 1810
 ```
 
@@ -15,13 +15,18 @@ If you want to run from source instead of the bundled binary:
 go run . --port 1810
 ```
 
+> **Note**: Knowledge base currently empty. Run `python rag_api_server.py` hoặc sync Obsidian vault để khởi động RAG indexing.
+
 ## Verify
 
+- Browser overview UI: `http://localhost:1810/overview`
 - Health: `http://localhost:1810/api/health`
 - Status: `http://localhost:1810/api/status`
+- JSON overview: `http://localhost:1810/api/overview`
 - Base URL for API clients: `http://localhost:1810`
 - Adaptive retrieval: `POST /api/v2/retrieve`
 - Runtime registry: `GET /api/v2/runtime/registry`
+- Knowledge base: `GET /api/knowledge` (currently empty)
 
 ## Runtime Model
 
@@ -54,9 +59,10 @@ Optional tuning:
 - `TIBRAIN_LLM_TIMEOUT_MS`
 
 ## Data
-
-- Config: `Z:\01_PROJECTS\tibrain\.env`
-- DB: `Z:\01_PROJECTS\tibrain\tibrain_data\tibrain.db`
+- Config: `Z:\01_PROJECTS\apps\tibrain\.env`
+- DB: `Z:\01_PROJECTS\apps\tibrain\data\tibrain_data\tibrain.db`
+- RAG Index: `Z:\01_PROJECTS\apps\tibrain\data\rag_index\`
+- Reports: `Z:\01_PROJECTS\apps\tibrain\data\reports\`
 
 ## Reference
 

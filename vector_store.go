@@ -12,13 +12,13 @@ import (
 
 // VectorChunk represents an embedded document chunk stored in SQLite
 type VectorChunk struct {
-	ID         string    `json:"id"`
-	DocumentID string    `json:"document_id"`
-	Vector     []float32 `json:"vector"`
-	Content    string    `json:"content"`
+	ID         string            `json:"id"`
+	DocumentID string            `json:"document_id"`
+	Vector     []float32         `json:"vector"`
+	Content    string            `json:"content"`
 	Metadata   map[string]string `json:"metadata"`
-	ChunkOrder int       `json:"chunk_order"`
-	CreatedAt  int64     `json:"created_at"`
+	ChunkOrder int               `json:"chunk_order"`
+	CreatedAt  int64             `json:"created_at"`
 }
 
 // VectorStore manages vector data in the hub database
@@ -135,7 +135,7 @@ func (vs *VectorStore) SearchSimilar(queryVector []float32, topK int, threshold 
 			FROM rag_vector_index v
 			JOIN rag_documents d ON v.document_id = d.id
 			WHERE d.status = 'active' ` + sqlFilter
-		
+
 		rows, errQuery := vs.db.Query(query)
 		if errQuery != nil {
 			return nil, fmt.Errorf("query filtered embeddings: %w", errQuery)
