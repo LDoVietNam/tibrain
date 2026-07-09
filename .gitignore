@@ -11,6 +11,12 @@
 /.claude/
 /.venv/
 /__pycache__/
+.kilo/
+.runtime/
+.ti-audit/
+/logs/
+/bin/
+/tmp/
 # Skip bundled internet content (VS Code Antigravity extension, MCP servers)
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Antigravity/**
 # Skip provider cookie docs (contain hardcoded API tokens)

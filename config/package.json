@@ -1,0 +1,15 @@
+{
+  "name": "tibrain",
+  "version": "0.1.0",
+  "description": "Ti Ecosystem Brain - Knowledge management and RAG system",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "dependencies": {
+    "@anthropic/capabilities": "^1.0.0",
+    "axios": "^1.6.0",
+    "lodash": "^4.17.21"
+  }
+}
