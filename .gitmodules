@@ -1,0 +1,9 @@
+[submodule "mcp"]
+	path = mcp
+	url = https://github.com/smart-mcp-proxy/mcpproxy-go.git
+[submodule "obsidian-headless"]
+	path = obsidian-headless
+	url = https://github.com/obsidianmd/obsidian-headless.git
+[submodule "qdrant"]
+	path = qdrant
+	url = https://github.com/qdrant/qdrant.git

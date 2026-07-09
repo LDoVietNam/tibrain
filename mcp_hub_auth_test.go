@@ -179,7 +179,7 @@ func TestNewMCPHubClient_UsesTiBrainDataConfigFallback(t *testing.T) {
 	t.Setenv("MCP_PROXY_BIN", "")
 
 	tempDir := t.TempDir()
-	configDir := filepath.Join(tempDir, "tibrain_data", "1mcp")
+	configDir := filepath.Join(tempDir, "data", "1mcp")
 	if err := os.MkdirAll(configDir, 0o755); err != nil {
 		t.Fatalf("create config dir: %v", err)
 	}

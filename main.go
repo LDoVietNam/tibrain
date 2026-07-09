@@ -146,7 +146,7 @@ type Config struct {
 
 func defaultConfig() *Config {
 	wd, _ := os.Getwd()
-	tibrainDataDir := filepath.Join(wd, "tibrain_data")
+	tibrainDataDir := filepath.Join(wd, "data")
 	return &Config{
 		Port:             1810,
 		DataDir:          tibrainDataDir,
