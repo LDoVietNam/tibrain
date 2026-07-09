@@ -11,14 +11,22 @@
 /.claude/
 /.venv/
 /__pycache__/
-.kilo/
-.runtime/
-.ti-audit/
+**/.kilo/
+**/.runtime/
+**/.ti-audit/
 /logs/
 /bin/
 /tmp/
-# Skip bundled internet content (VS Code Antigravity extension, MCP servers)
+.ti*
+**/.ti*
+**/.codex*
+**/.sisyphus*
+
+# Skip learning lab runtime artifacts
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/.agent/**
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/active/**
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Antigravity/**
+
 # Skip provider cookie docs (contain hardcoded API tokens)
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/CookieProviders/
 # Skip broader Router knowledge dir (also contains API keys in *.md)
@@ -26,6 +34,11 @@
 # Skip entire 03_Knowledge (provider integration docs w/ API keys)
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Cursor-Trial-Hub/
+
+# Skip embedded git repositories (not submodules)
+**/mcp/**
+**/obsidian-headless/**
+**/qdrant/**
 
 # Allowlist: special files
 !Makefile
