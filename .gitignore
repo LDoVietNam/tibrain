@@ -35,28 +35,18 @@
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/
 **/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Cursor-Trial-Hub/
 
-# Skip embedded git repositories (not submodules)
+# Skip embedded git repositories (not submodules) - override dir allowlist
 **/mcp/**
 **/obsidian-headless/**
 **/qdrant/**
 
-# Allowlist: special files
-!Makefile
-!Dockerfile
-!.gitignore
-!.gitattributes
-!.gitkeep
+# Skip learning lab runtime artifacts (override file-type allowlist)
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/.agent/**
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/active/**
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Antigravity/**
 
-# Allowlist: file types
-!*.md
-!*.go
-!*.yml
-!*.yaml
-!*.json
-!*.sh
-!*.cmd
-!*.bat
-!*.ps1
-
-# Allowlist: directories (so files inside are evaluated against type rules)
-!*/
+# Skip provider cookie/docs (override file-type allowlist)
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/CookieProviders/
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/
+**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Cursor-Trial-Hub/
