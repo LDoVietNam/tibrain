@@ -100,8 +100,8 @@ func defaultIDGen() string {
 //   - DB ops use SQLite's own connection-level locking (no app-level locks needed)
 //   - Graph writes are fire-and-forget goroutines (don't block the SQL write)
 type CognitiveMemoryManager struct {
-	db        DB
-	graph     GraphStore
+	db         DB
+	graph      GraphStore
 	generateID IDGen
 
 	workingMu     sync.RWMutex
@@ -143,9 +143,9 @@ func NewCognitiveMemoryManagerWithIDGen(db DB, graph GraphStore, idGen IDGen) *C
 		idGen = defaultIDGen
 	}
 	return &CognitiveMemoryManager{
-		db:           db,
-		graph:        graph,
-		generateID:   idGen,
+		db:            db,
+		graph:         graph,
+		generateID:    idGen,
 		workingMemory: make(map[string]interface{}),
 	}
 }
@@ -587,4 +587,3 @@ func (cm *CognitiveMemoryManager) GetRecentExperience(ctx context.Context, limit
 func (cm *CognitiveMemoryManager) GetRelevantKnowledge(ctx context.Context, query string, limit int) ([]MemoryEntry, error) {
 	return cm.QueryMemory(ctx, query, MemorySemantic, limit)
 }
-

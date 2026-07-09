@@ -20,11 +20,6 @@ type Config struct {
 	CLIRegistry        bool
 	HandoffTrack       bool
 	SkillSync          bool
-	MCPHubEnabled      bool
-	MCPHubURL          string
-	MCPHubAutoSync     bool
-	MCPHubSyncInterval string
-	MCPHubRegistryFile string
 }
 
 // DefaultConfig returns the default configuration.
@@ -37,11 +32,6 @@ func DefaultConfig() *Config {
 		CLIRegistry:        true,
 		HandoffTrack:       true,
 		SkillSync:          false,
-		MCPHubEnabled:      false,
-		MCPHubURL:          "http://localhost:3000",
-		MCPHubAutoSync:     true,
-		MCPHubSyncInterval: "5m",
-		MCPHubRegistryFile: filepath.Join(getTiBrainDir(), "mcp_registry.json"),
 	}
 }
 
@@ -60,13 +50,6 @@ func LoadConfig() *Config {
 			RouterBrain struct {
 				URL string `yaml:"url"`
 			} `yaml:"router_brain"`
-			MCPHub struct {
-				Enabled      bool   `yaml:"enabled"`
-				HubURL       string `yaml:"hub_url"`
-				AutoSync     bool   `yaml:"auto_sync"`
-				SyncInterval string `yaml:"sync_interval"`
-				RegistryFile string `yaml:"registry_file"`
-			} `yaml:"mcp_hub"`
 			CLIRegistry struct {
 				Enabled bool `yaml:"enabled"`
 			} `yaml:"cli_registry"`
@@ -90,17 +73,6 @@ func LoadConfig() *Config {
 			}
 			if yamlConfig.RouterBrain.URL != "" {
 				config.RouterBrainURL = yamlConfig.RouterBrain.URL
-			}
-			config.MCPHubEnabled = yamlConfig.MCPHub.Enabled
-			if yamlConfig.MCPHub.HubURL != "" {
-				config.MCPHubURL = yamlConfig.MCPHub.HubURL
-			}
-			config.MCPHubAutoSync = yamlConfig.MCPHub.AutoSync
-			if yamlConfig.MCPHub.SyncInterval != "" {
-				config.MCPHubSyncInterval = yamlConfig.MCPHub.SyncInterval
-			}
-			if yamlConfig.MCPHub.RegistryFile != "" {
-				config.MCPHubRegistryFile = yamlConfig.MCPHub.RegistryFile
 			}
 			config.CLIRegistry = yamlConfig.CLIRegistry.Enabled
 			config.HandoffTrack = yamlConfig.HandoffTracking.Enabled

@@ -133,16 +133,16 @@ func (m *Mapper) validateScopes(scopes []string) []string {
 func normalizeTag(tag string) string {
 	// Trim whitespace first
 	tag = strings.TrimSpace(tag)
-	
+
 	// Remove leading # if present
 	tag = strings.TrimPrefix(tag, "#")
-	
+
 	// Replace slashes with dashes (hierarchical tags)
 	tag = strings.ReplaceAll(tag, "/", "-")
-	
+
 	// Convert to lowercase
 	tag = strings.ToLower(tag)
-	
+
 	return tag
 }
 
