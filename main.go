@@ -254,19 +254,14 @@ type Hub struct {
 }
 
 func NewHub(dataDir string) (*Hub, error) {
-	// Use the internal/db package for database management
 	internalHub, err := db.NewHub(dataDir)
 	if err != nil {
 		return nil, fmt.Errorf("create internal hub: %w", err)
 	}
 
-	if err := updateIntegrationSchema(internalHub.DB()); err != nil {
+	if err := db.ApplyMigrations(internalHub.DB()); err != nil {
 		internalHub.Close()
-		return nil, fmt.Errorf("init integration schema: %w", err)
-	}
-	if err := initRAGSchema(internalHub.DB()); err != nil {
-		internalHub.Close()
-		return nil, fmt.Errorf("init rag schema: %w", err)
+		return nil, fmt.Errorf("apply migrations: %w", err)
 	}
 
 	asyncWriter := NewAsyncWriter(internalHub.DB(), 5000)
