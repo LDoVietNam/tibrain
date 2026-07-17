@@ -7,48 +7,32 @@
 
 # Hard block: directories (match at any depth)
 **/node_modules/
-/.git/
-/.claude/
-/.venv/
-/__pycache__/
-**/.kilo/
+**/.github/
 **/.runtime/
+**/.kilo/
 **/.ti-audit/
-/logs/
-/bin/
-/tmp/
-.ti*
-**/.ti*
-**/.codex*
-**/.sisyphus*
+**/.mimocode/
+**/logs/
+**/bin/
+**/tmp/
+**/build/
+**/data/
+**/.claude/
+**/.codex/
 
-# Skip learning lab runtime artifacts
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/.agent/**
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/active/**
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Antigravity/**
+# TiBrain essentials (whitelist)
+!main.go
+!Makefile
+!Dockerfile
+!docker-compose.yml
+!*.md
+!*.go
+!*.yml
+!*.yaml
+!*.json
+!*.sh
+!*.bat
+!*.ps1
 
-# Skip provider cookie docs (contain hardcoded API tokens)
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/CookieProviders/
-# Skip broader Router knowledge dir (also contains API keys in *.md)
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/
-# Skip entire 03_Knowledge (provider integration docs w/ API keys)
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Cursor-Trial-Hub/
-
-# Skip embedded git repositories (not submodules) - override dir allowlist
-**/mcp/**
-**/obsidian-headless/**
-**/qdrant/**
-
-# Skip learning lab runtime artifacts (override file-type allowlist)
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/.agent/**
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/active/**
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Antigravity/**
-
-# Skip provider cookie/docs (override file-type allowlist)
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/CookieProviders/
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/Router/
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/03_Knowledge/
-**/knowledge/ti-ecosystem-docs/content/skills/Ti-learning-lab/06_HandsOn/Cursor-Trial-Hub/
-data/
-
+# Internal packages
+!internal/**/*.go

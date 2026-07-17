@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  tibrain:
+    build: .
+    container_name: tibrain-hub
+    ports:
+      - "1810:1810"
+      - "1840:1840"
+    volumes:
+      - tibrain_data:/app/data
+      - /host/.config/kilo:/host/.config/kilo:ro
+    environment:
+      - TIBRAIN_INDEX_KNOWLEDGE=false
+      - MCP_HUB_URL=http://localhost:1840
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--timeout=5", "http://localhost:1810/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - tibrain-net
+
+  omniroute:
+    image: ghcr.io/router-for-me/omniroute:latest
+    container_name: omniroute-provider-pool
+    ports:
+      - "1807:1807"
+    environment:
+      - OMNIROUTE_PORT=1807
+      - MAX_CONNECTIONS=100
+    restart: unless-stopped
+    networks:
+      - tibrain-net
+    depends_on:
+      - tibrain
+
+networks:
+  tibrain-net:
+    driver: bridge
+
+volumes:
+  tibrain_data:

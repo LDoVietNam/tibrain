@@ -1,0 +1,37 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - staticcheck
+    - govet
+    - gosimple
+    - unused
+
+  disable:
+    - funlen
+    - lll
+    - godoc
+    - gochecknoglobals
+    - gochecknoinits
+    - gocognit
+    - gocyclo
+    - godot
+    - goimports
+    - gomodguard
+    - gomoddirectives
+    - gosec
+    - noctx
+    - nolintlint
+    - wrapcheck
+
+linters-settings:
+  errcheck:
+    check-type-assertions: false
+    check-typed-nil: false
+
+issues:
+  exit-code: 1
+  severity:
+    default-severity: error

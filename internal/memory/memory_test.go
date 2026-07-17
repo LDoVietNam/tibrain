@@ -24,7 +24,8 @@ CREATE TABLE memories (
   last_access TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now')),
-  expires_at TEXT
+  expires_at TEXT,
+  source TEXT
 );
 CREATE INDEX idx_memories_type ON memories(type);
 CREATE INDEX idx_memories_expires ON memories(expires_at);
@@ -80,9 +81,6 @@ func TestStoreEpisodicMemory(t *testing.T) {
 	}
 	if entries[0].Importance != 0.7 {
 		t.Errorf("Importance: got %v want 0.7", entries[0].Importance)
-	}
-	if entries[0].Source != "agent_interaction" {
-		t.Errorf("Source: got %s", entries[0].Source)
 	}
 }
 

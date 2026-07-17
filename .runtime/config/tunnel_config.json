@@ -1,9 +1,9 @@
 {
-  "tunnel": "tibrain",
-  "hostname": "tibrain.trepremium.online",
+  "tunnel": "tibrain-tools-dev",
+  "hostname": "mcp.trepremium.online",
   "target": "http://localhost:1811",
   "endpoints": {
-    "sse": "/mcp",
+    "sse": "/mcp/sse",
     "message": "/mcp/message",
     "api": {
       "preflight": "/api/v1/prompt/preflight",

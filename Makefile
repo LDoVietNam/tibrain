@@ -152,6 +152,25 @@ run-index: build
 	./$(BUILD_DIR)/$(BINARY) --index-knowledge
 
 # ─────────────────────────────────────────────────────────────
+# Tunnel Targets
+# ─────────────────────────────────────────────────────────────
+
+CLOUDFLARED_CONFIG ?= Z:\02_CORE\_cli\.config\.cloudflared\config.yml
+
+.PHONY: tunnel
+tunnel: ## Start Cloudflare tunnel for TiBrain
+	@echo "🚀 Starting Cloudflare tunnel for TiBrain..."
+	@cloudflared tunnel --config "$(CLOUDFLARED_CONFIG)" run
+
+.PHONY: tunnel-start
+tunnel-start: ## Start tunnel in background (Windows PowerShell)
+	@echo "🚀 Starting tunnel in background..."
+	@powershell -Command "Start-Process -FilePath 'cloudflared.exe' -ArgumentList 'tunnel','--config','$(CLOUDFLARED_CONFIG)','run' -WindowStyle Hidden"
+
+.PHONY: start
+start: run tunnel-start ## Start TiBrain + Cloudflare tunnel
+
+# ─────────────────────────────────────────────────────────────
 # Composite Targets
 # ─────────────────────────────────────────────────────────────
 
@@ -217,9 +236,12 @@ help:
 	@echo "  fmt            Format code with gofmt"
 	@echo "  vet            Run go vet"
 	@echo "  tidy           Run go mod tidy"
-	@echo "  run            Build and run"
+	@echo "  run            Build and run TiBrain server"
 	@echo "  run-debug      Build debug and run"
 	@echo "  run-index      Build and run knowledge indexing"
+	@echo "  tunnel         Start Cloudflare tunnel (blocks)"
+	@echo "  tunnel-start   Start Cloudflare tunnel in background"
+	@echo "  start          Build and run TiBrain + Cloudflare tunnel together"
 	@echo "  sync-omniroute Sync OmniRoute knowledge into TiBrain"
 	@echo "  verify         Pre-commit gate (vet + lint + test-short)"
 	@echo "  bench          Run benchmarks"

@@ -1,1 +1,0 @@
-tibrain is a project that requires connection to a server. To connect, use the command "tibrain connect" followed by the server address.
