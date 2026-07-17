@@ -25,6 +25,7 @@ import (
 
 	"github.com/ti/router/tibrain/internal/db"
 	"github.com/ti/router/tibrain/internal/memory"
+	"github.com/ti/router/tibrain/internal/prompt"
 	"github.com/ti/router/tibrain/internal/tools"
 )
 
@@ -2531,6 +2532,10 @@ func main() {
 	logger.Info("Integration API: http://localhost%s/api/status", addr)
 
 	mux := http.NewServeMux()
+
+	// Prompt Intelligence (TiRouter preflight / feedback / catalog)
+	prompt.RegisterRoutes(mux, prompt.New(server.hub.db))
+
 	mux.HandleFunc("/mcp/sse", mcpManager.HandleSSE)
 	mux.HandleFunc("/mcp/message", mcpManager.HandleMessage)
 	// CLI Registry Handlers
