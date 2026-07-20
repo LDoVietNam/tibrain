@@ -1,247 +1,391 @@
-// Package prompt implements TiBrain Prompt Intelligence: a registry of prompt
-// capsules, a preflight selector (used by TiRouter to pick the best PromptEnvelope),
-// an outcome-feedback logger, and a catalog-version endpoint.
-//
-// Schema: see internal/db/migrations/0004_prompt_intelligence.sql
 package prompt
 
 import (
-	"crypto/sha256"
-	"database/sql"
-	"encoding/json"
+	"context"
+	"errors"
 	"fmt"
-	"math/rand"
-	"net/http"
+	"math"
+	"sort"
+	"strings"
+	"sync"
 	"time"
+
+	"github.com/ti/router/tibrain/internal/prompts"
 )
 
-// PromptIntelligence wraps the prompt registry DB access.
+// PromptFeedback represents feedback on a prompt's effectiveness
+type PromptFeedback struct {
+	PromptID   string                 `json:"prompt_id"`
+	Intent     string                 `json:"intent"`
+	Domain     string                 `json:"domain"`
+	Score      float64                `json:"score"` // 0.0 to 1.0
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// PromptChoice represents a prompt selected for a given context
+type PromptChoice struct {
+	Prompt     *prompts.Prompt `json:"prompt"`
+	Score      float64         `json:"score"` // Confidence score for this selection
+	Reasoning  string          `json:"reasoning,omitempty"`
+	Metadata   map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// PromptRequest represents a request for prompt selection
+type PromptRequest struct {
+	Context     map[string]interface{} `json:"context,omitempty"`
+	Intent      string                 `json:"intent"`
+	Domain      string                 `json:"domain"`
+	Variables   map[string]interface{} `json:"variables,omitempty"`
+	Constraints []string               `json:"constraints,omitempty"`
+}
+
+// PromptResponse represents the response from prompt selection
+type PromptResponse struct {
+	Primary     *PromptChoice   `json:"primary,omitempty"`
+	Alternatives []*PromptChoice `json:"alternatives,omitempty"`
+	Usage       string          `json:"usage,omitempty"` // How the prompt should be used
+	Metadata    map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// PromptScore is a temporary struct for scoring prompts during selection
+type PromptScore struct {
+	Prompt *prompts.Prompt
+	Score  float64
+}
+
+// PromptIntelligence handles prompt selection, retrieval, and feedback
 type PromptIntelligence struct {
-	db *sql.DB
+	mu           sync.RWMutex
+	sources      map[string]prompts.PromptSource
+	feedback     []*PromptFeedback // Changed to slice of pointers
+	usageStats   map[string]int
+	domainModels map[string]map[string]float64 // domain -> intent -> map[promptID] affinity score
 }
 
-// New constructs a PromptIntelligence from the shared Hub DB.
-func New(db *sql.DB) *PromptIntelligence {
-	return &PromptIntelligence{db: db}
-}
-
-// Capsule is the metadata row of a prompt capsule.
-type Capsule struct {
-	ID          string `json:"id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Intent      string `json:"intent"`
-	Domain      string `json:"domain"`
-	Risk        string `json:"risk"`
-	Status      string `json:"status"`
-}
-
-// Envelope is what TiRouter consumes: a concrete prompt version + placement.
-type Envelope struct {
-	CapsuleID  string `json:"capsule_id"`
-	Version    string `json:"version"`
-	Intent     string `json:"intent"`
-	Domain     string `json:"domain"`
-	Risk       string `json:"risk"`
-	Placement  string `json:"placement"`
-	Content    string `json:"content"`
-	TokenEstimate int `json:"token_estimate"`
-}
-
-// PreflightRequest is the TiRouter preflight input.
-type PreflightRequest struct {
-	Intent     string `json:"intent"`
-	Domain     string `json:"domain"`
-	MinRisk    string `json:"min_risk,omitempty"`
-}
-
-func newID(prefix string) string {
-	return fmt.Sprintf("%s_%d_%06d", prefix, time.Now().UnixNano(), rand.Intn(1000000))
-}
-
-// SeedDefaults inserts a small built-in catalog if the registry is empty.
-// Safe to call on every startup (idempotent).
-func (p *PromptIntelligence) SeedDefaults() error {
-	var n int
-	if err := p.db.QueryRow(`SELECT COUNT(*) FROM prompt_capsules`).Scan(&n); err != nil {
-		return err
+// New creates a new PromptIntelligence instance
+func New(sources map[string]prompts.PromptSource) *PromptIntelligence {
+	if sources == nil {
+		sources = make(map[string]prompts.PromptSource)
 	}
-	if n > 0 {
-		return nil
+	
+	// Add default in-memory source if none provided
+	if len(sources) == 0 {
+		sources["memory"] = prompts.NewInMemorySource()
 	}
-	now := time.Now().Unix()
-	seeds := []struct {
-		id, name, intent, domain, risk, status, content, placement string
-	}{
-		{"cap_chat_general", "General Chat", "chat.general", "general", "low", "active",
-			"You are TiBrain, a concise internal intelligence assistant. Answer directly.", "system"},
-		{"cap_code_review", "Code Review", "code.review", "engineering", "medium", "active",
-			"Review the following diff for bugs, security and style. Be specific.", "system"},
-		{"cap_agent_orchestrate", "Agent Orchestration", "agent.orchestrate", "engineering", "high", "active",
-			"Plan and decompose the task into verifiable steps before acting.", "system"},
+	
+	return &PromptIntelligence{
+		sources:      sources,
+		feedback:     make([]*PromptFeedback, 0),
+		usageStats:   make(map[string]int),
+		domainModels: make(map[string]map[string]float64),
 	}
-	for _, s := range seeds {
-		if _, err := p.db.Exec(
-			`INSERT OR IGNORE INTO prompt_capsules (id,name,description,intent,domain,risk,status,created_at,updated_at)
-			 VALUES (?,?,?,?,?,?,?,?,?)`,
-			s.id, s.name, s.name, s.intent, s.domain, s.risk, s.status, now, now); err != nil {
-			return err
+}
+
+// AddSource adds a prompt source to the intelligence system
+func (p *PromptIntelligence) AddSource(name string, source prompts.PromptSource) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.sources[name] = source
+}
+
+// GetSource returns a prompt source by name
+func (p *PromptIntelligence) GetSource(name string) (prompts.PromptSource, bool) {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	source, exists := p.sources[name]
+	return source, exists
+}
+
+// ListSources returns all registered prompt sources
+func (p *PromptIntelligence) ListSources() []string {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	sources := make([]string, 0, len(p.sources))
+	for name := range p.sources {
+		sources = append(sources, name)
+	}
+	return sources
+}
+
+// Process processes a prompt request and returns the best matching prompt(s)
+func (p *PromptIntelligence) Process(ctx context.Context, req *PromptRequest) (*PromptResponse, error) {
+	if req == nil {
+		return nil, errors.New("nil request")
+	}
+	
+	// Collect all available prompts from all sources
+	allPrompts := []*prompts.Prompt{}
+	for _, source := range p.sources {
+		ps, err := source.List(ctx)
+		if err != nil {
+			// Continue with what we have from other sources
+			continue
 		}
-		hash := fmt.Sprintf("%x", sha256.Sum256([]byte(s.content)))
-		if _, err := p.db.Exec(
-			`INSERT OR IGNORE INTO prompt_capsule_versions (id,version,content,content_hash,token_estimate,placement,created_at)
-			 VALUES (?,?,?,?,?,?,?)`,
-			s.id, "1.0.0", s.content, hash, len(s.content)/4, s.placement, now); err != nil {
-			return err
+		// Convert []prompts.Prompt to []*prompts.Prompt
+		for _, p := range ps {
+			allPrompts = append(allPrompts, &p)
 		}
 	}
-	return nil
-}
-
-// Preflight selects the best active capsule for an intent/domain.
-func (p *PromptIntelligence) Preflight(req PreflightRequest) (*Envelope, error) {
-	if err := p.SeedDefaults(); err != nil {
-		return nil, err
+	
+	if len(allPrompts) == 0 {
+		return &PromptResponse{
+			Usage: "no_prompts_available",
+			Metadata: map[string]interface{}{
+				"reason": "no prompts found in any source",
+			},
+		}, nil
 	}
-	var id, intent, domain, risk, status string
-	q := `SELECT id,intent,domain,risk,status FROM prompt_capsules
-	      WHERE intent=? AND status='active' ORDER BY updated_at DESC LIMIT 1`
-	err := p.db.QueryRow(q, req.Intent).Scan(&id, &intent, &domain, &risk, &status)
-	if err == sql.ErrNoRows && req.Domain != "" {
-		q = `SELECT id,intent,domain,risk,status FROM prompt_capsules
-		     WHERE domain=? AND status='active' ORDER BY updated_at DESC LIMIT 1`
-		err = p.db.QueryRow(q, req.Domain).Scan(&id, &intent, &domain, &risk, &status)
+	
+	// Score each prompt based on relevance to the request
+	scoredPrompts := []*PromptScore{}
+	for _, prompt := range allPrompts {
+		score := p.scorePrompt(prompt, req)
+		scoredPrompts = append(scoredPrompts, &PromptScore{
+			Prompt: prompt,
+			Score:  score,
+		})
 	}
-	if err == sql.ErrNoRows {
-		// fallback: any active capsule
-		q = `SELECT id,intent,domain,risk,status FROM prompt_capsules
-		     WHERE status='active' ORDER BY updated_at DESC LIMIT 1`
-		err = p.db.QueryRow(q).Scan(&id, &intent, &domain, &risk, &status)
+	
+	// Sort by score descending
+	sort.Slice(scoredPrompts, func(i, j int) bool {
+		return scoredPrompts[i].Score > scoredPrompts[j].Score
+	})
+	
+	// Take the top prompt as primary, and up to 2 as alternatives
+	var primary *PromptChoice
+	var alternatives []*PromptChoice
+	
+	if len(scoredPrompts) > 0 {
+		top := scoredPrompts[0]
+		primary = &PromptChoice{
+			Prompt:     top.Prompt,
+			Score:      top.Score,
+			Reasoning:  p.generateReasoning(top.Prompt, req),
+			Metadata:   map[string]interface{}{"rank": 1},
+		}
+		
+		// Add up to 2 alternatives
+		for i := 1; i < min(3, len(scoredPrompts)); i++ {
+			alt := scoredPrompts[i]
+			alternatives = append(alternatives, &PromptChoice{
+				Prompt:     alt.Prompt,
+				Score:      alt.Score,
+				Reasoning:  p.generateReasoning(alt.Prompt, req),
+				Metadata:   map[string]interface{}{"rank": i + 1},
+			})
+		}
 	}
-	if err != nil {
-		return nil, err
+	
+	// Record usage for the selected prompt
+	if primary != nil {
+		p.recordUsage(primary.Prompt.ID)
+		p.updateDomainModel(req.Domain, req.Intent, primary.Prompt.ID, 0.1) // Small positive reinforcement
 	}
-	var version, placement, content string
-	var tok int
-	if err := p.db.QueryRow(
-		`SELECT version,placement,content,token_estimate FROM prompt_capsule_versions
-		 WHERE id=? ORDER BY created_at DESC LIMIT 1`, id,
-	).Scan(&version, &placement, &content, &tok); err != nil {
-		return nil, err
+	
+	// Determine usage suggestion
+	usage := "direct"
+	if len(alternatives) > 0 {
+		usage = "consider_alternatives"
+	} else if primary != nil && primary.Score < 0.5 {
+		usage = "low_confidence"
 	}
-	return &Envelope{
-		CapsuleID: id, Version: version, Intent: intent, Domain: domain,
-		Risk: risk, Placement: placement, Content: content, TokenEstimate: tok,
+	
+	return &PromptResponse{
+		Primary:     primary,
+		Alternatives: alternatives,
+		Usage:       usage,
+		Metadata: map[string]interface{}{
+			"total_candidates": len(allPrompts),
+			"processed_at":     fmt.Sprintf("%d", time.Now().Unix()),
+		},
 	}, nil
 }
 
-// FeedbackRequest is the outcome log from TiRouter.
-type FeedbackRequest struct {
-	RequestID      string `json:"request_id"`
-	CapsuleID      string `json:"capsule_id"`
-	CapsuleVersion string `json:"capsule_version"`
-	Outcome        string `json:"outcome"`
-	UserOverride   int    `json:"user_override,omitempty"`
-	AddedTokens    int    `json:"added_tokens,omitempty"`
-	ProviderErrorCode string `json:"provider_error_code,omitempty"`
-}
-
-// RecordFeedback persists an outcome + a route trace.
-func (p *PromptIntelligence) RecordFeedback(req FeedbackRequest) error {
-	now := time.Now().Unix()
-	fid := newID("fb")
-	if _, err := p.db.Exec(
-		`INSERT INTO prompt_feedback (id,request_id,capsule_id,capsule_version,outcome,user_override,added_tokens,provider_error_code,created_at)
-		 VALUES (?,?,?,?,?,?,?,?,?)`,
-		fid, req.RequestID, req.CapsuleID, req.CapsuleVersion, req.Outcome,
-		req.UserOverride, req.AddedTokens, req.ProviderErrorCode, now); err != nil {
-		return err
+// RecordFeedback records feedback about a prompt's effectiveness for learning
+func (p *PromptIntelligence) RecordFeedback(ctx context.Context, feedback *PromptFeedback) error {
+	if feedback == nil {
+		return errors.New("nil feedback")
 	}
-	tid := newID("tr")
-	if _, err := p.db.Exec(
-		`INSERT INTO prompt_route_traces (id,request_id,capsule_id,capsule_version,decision,confidence,reason_code,latency_ms,created_at)
-		 VALUES (?,?,?,?,?,?,?,?,?)`,
-		tid, req.RequestID, req.CapsuleID, req.CapsuleVersion, "feedback", 1.0, req.Outcome, 0, now); err != nil {
-		return err
+	
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	
+	// Validate feedback
+	if feedback.PromptID == "" {
+		return errors.New("prompt_id is required")
 	}
+	if feedback.Score < 0.0 || feedback.Score > 1.0 {
+		return errors.New("score must be between 0.0 and 1.0")
+	}
+	
+	// Store feedback
+	p.feedback = append(p.feedback, feedback)
+	
+	// Update domain model based on feedback
+	if feedback.Score > 0.7 {
+		// Positive reinforcement
+		p.updateDomainModel(feedback.Domain, feedback.Intent, feedback.PromptID, 0.2)
+	} else if feedback.Score < 0.3 {
+		// Negative reinforcement
+		p.updateDomainModel(feedback.Domain, feedback.Intent, feedback.PromptID, -0.1)
+	}
+	
 	return nil
 }
 
-// CatalogVersion returns an ETag-like version of the current catalog.
-func (p *PromptIntelligence) CatalogVersion() (string, error) {
-	var maxUpdated sql.NullInt64
-	if err := p.db.QueryRow(`SELECT MAX(updated_at) FROM prompt_capsules`).Scan(&maxUpdated); err != nil {
-		return "", err
-	}
-	var count int
-	if err := p.db.QueryRow(`SELECT COUNT(*) FROM prompt_capsules`).Scan(&count); err != nil {
-		return "", err
-	}
-	raw := fmt.Sprintf("%d:%d", count, maxUpdated.Int64)
-	return fmt.Sprintf("%x", sha256.Sum256([]byte(raw))), nil
+// GetFeedback returns all collected feedback
+func (p *PromptIntelligence) GetFeedback() []*PromptFeedback {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	// Return a copy to prevent external modification
+	result := make([]*PromptFeedback, len(p.feedback))
+	copy(result, p.feedback)
+	return result
 }
 
-// RegisterRoutes wires the three Prompt Intelligence endpoints onto mux.
-// Routes:
-//   POST /api/v1/prompt/preflight
-//   POST /api/v1/prompt/feedback
-//   GET  /api/v1/prompt/catalog/version
-func RegisterRoutes(mux *http.ServeMux, pi *PromptIntelligence) {
-	mux.HandleFunc("/api/v1/prompt/preflight", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		var req PreflightRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		env, err := pi.Preflight(req)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		if env == nil {
-			http.Error(w, "no matching capsule", http.StatusNotFound)
-			return
-		}
-		writeJSON(w, http.StatusOK, env)
-	})
-
-	mux.HandleFunc("/api/v1/prompt/feedback", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-		var req FeedbackRequest
-		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		if req.CapsuleID == "" || req.Outcome == "" {
-			http.Error(w, "capsule_id and outcome required", http.StatusBadRequest)
-			return
-		}
-		if err := pi.RecordFeedback(req); err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]string{"status": "recorded"})
-	})
-
-	mux.HandleFunc("/api/v1/prompt/catalog/version", func(w http.ResponseWriter, r *http.Request) {
-		v, err := pi.CatalogVersion()
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-		writeJSON(w, http.StatusOK, map[string]string{"version": v})
-	})
+// GetStats returns usage statistics
+func (p *PromptIntelligence) GetStats() map[string]interface{} {
+	p.mu.RLock()
+	defer p.mu.RUnlock()
+	
+	stats := map[string]interface{}{
+		"total_feedback": len(p.feedback),
+		"usage_stats":    make(map[string]int),
+		"sources":        p.ListSources(),
+	}
+	
+	// Copy usage stats
+	for k, v := range p.usageStats {
+		stats["usage_stats"].(map[string]int)[k] = v
+	}
+	
+	return stats
 }
 
-func writeJSON(w http.ResponseWriter, status int, v interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+// scorePrompt calculates how well a prompt matches a request
+func (p *PromptIntelligence) scorePrompt(prompt *prompts.Prompt, req *PromptRequest) float64 {
+	score := 0.0
+	
+	// Base score from domain match
+	if strings.EqualFold(prompt.Domain, req.Domain) {
+		score += 0.4
+	} else if prompt.Domain == "" || req.Domain == "" {
+		// Wildcard match for empty domains
+		score += 0.2
+	}
+	
+	// Boost from learned domain model
+	p.mu.RLock()
+	if domainModel, ok := p.domainModels[req.Domain]; ok {
+		if affinity, ok := domainModel[req.Intent]; ok { // Note: Changed from prompt.ID to req.Intent
+			score += affinity * 0.3 // Weight for learned affinity
+		}
+	}
+	p.mu.RUnlock()
+	
+	// Check for keyword matches in name/description
+	content := strings.ToLower(prompt.Name + " " + prompt.Description)
+	intentTerms := strings.Fields(strings.ToLower(req.Intent))
+	
+	matches := 0
+	for _, term := range intentTerms {
+		if strings.Contains(content, term) {
+			matches++
+		}
+	}
+	
+	if len(intentTerms) > 0 {
+		score += float64(matches) / float64(len(intentTerms)) * 0.3
+	}
+	
+	// Apply usage popularity boost (logarithmic to prevent runaway feedback loops)
+	p.mu.RLock()
+	usageCount := p.usageStats[prompt.ID]
+	p.mu.RUnlock()
+	if usageCount > 0 {
+		score += math.Min(0.1, math.Log(float64(usageCount+1))/10.0)
+	}
+	
+	// Ensure score is in [0,1] range
+	if score > 1.0 {
+		score = 1.0
+	}
+	if score < 0.0 {
+		score = 0.0
+	}
+	
+	return score
+}
+
+// updateDomainModel updates the learned affinity between a domain/intent and a prompt
+func (p *PromptIntelligence) updateDomainModel(domain, intent, pid string, delta float64) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	
+	// Initialize domain map if needed
+	if p.domainModels[domain] == nil {
+		p.domainModels[domain] = make(map[string]float64)
+	}
+	
+	// Get current affinity for this domain/intent pair
+	current := p.domainModels[domain][intent]
+	
+	// Calculate new value with bounds checking
+	newValue := current + delta
+	if newValue > 1.0 {
+		newValue = 1.0
+	}
+	if newValue < 0.0 {
+		newValue = 0.0
+	}
+	
+	// Store the updated affinity
+	p.domainModels[domain][intent] = newValue
+}
+
+// recordUsage increments the usage count for a prompt
+func (p *PromptIntelligence) recordUsage(promptID string) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.usageStats[promptID]++
+}
+
+// generateReasoning creates a human-readable explanation for why a prompt was selected
+func (p *PromptIntelligence) generateReasoning(prompt *prompts.Prompt, req *PromptRequest) string {
+	var reasons []string
+	
+	if strings.EqualFold(prompt.Domain, req.Domain) {
+		reasons = append(reasons, "domain match")
+	} else if prompt.Domain == "" || req.Domain == "" {
+		reasons = append(reasons, "wildcard domain")
+	}
+	
+	// Check for keyword matches
+	content := strings.ToLower(prompt.Name + " " + prompt.Description)
+	intentTerms := strings.Fields(strings.ToLower(req.Intent))
+	matches := []string{}
+	
+	for _, term := range intentTerms {
+		if strings.Contains(content, term) {
+			matches = append(matches, term)
+		}
+	}
+	
+	if len(matches) > 0 {
+		reasons = append(reasons, fmt.Sprintf("keyword matches: %v", strings.Join(matches, ", ")))
+	}
+	
+	if len(reasons) == 0 {
+		reasons = append(reasons, "default selection")
+	}
+	
+	return strings.Join(reasons, "; ")
+}
+
+// Helper function to get the minimum of two integers
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
