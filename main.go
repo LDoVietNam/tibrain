@@ -132,6 +132,7 @@ func parseAllowedRootsList(raw string) []string {
 var globalCognitiveMemory *memory.CognitiveMemoryManager
 var globalRetrievalRouter *RetrievalRouter
 var globalTiAgentOrchestrator *TiAgentOrchestrator
+var globalToolDispatcher *tools.Dispatcher
 
 // ─────────────────────────────────────────────────────────────
 // Configuration
@@ -1247,6 +1248,7 @@ func (s *Server) handleExecuteTool(w http.ResponseWriter, r *http.Request) {
 
 	var response map[string]interface{}
 	var err error
+	paramsJSONBytes, _ := json.Marshal(req.Params)
 
 	if strings.HasPrefix(req.Name, "mcp-") {
 		result, callErr := s.hub.CallMCPTool(req.Name, req.Params)
@@ -1272,14 +1274,32 @@ func (s *Server) handleExecuteTool(w http.ResponseWriter, r *http.Request) {
 		result, execErr := s.executeLocalTool(r.Context(), req.Name, req.Params)
 		err = execErr
 		if err != nil {
+			status := http.StatusInternalServerError
+			code := "internal_error"
+			if strings.Contains(err.Error(), "[not_implemented]") {
+				status = http.StatusNotImplemented
+				code = "not_implemented"
+			} else if strings.Contains(err.Error(), "[invalid_argument]") {
+				status = http.StatusBadRequest
+				code = "invalid_argument"
+			} else if strings.Contains(err.Error(), "[access_denied]") {
+				status = http.StatusForbidden
+				code = "access_denied"
+			}
 			response = map[string]interface{}{
 				"success":     false,
 				"error":       err.Error(),
+				"code":        code,
 				"tool":        req.Name,
 				"executed":    false,
 				"executor_id": "ti-local-cli",
 				"source":      "local",
 			}
+			s.hub.LogToolUsage(req.Name, req.AgentID, string(paramsJSONBytes), err.Error(), false, err.Error())
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			json.NewEncoder(w).Encode(response)
+			return
 		} else {
 			response = map[string]interface{}{
 				"success":     true,
@@ -2415,17 +2435,33 @@ func (s *Server) handleMCPHubBatchCall(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// executeLocalTool executes a local tool
+// executeLocalTool runs a built-in TiBrain tool through the real dispatcher.
+// Unimplemented tools return a not_implemented error instead of a fake
+// success, so callers never mistake a no-op for a completed action.
 func (s *Server) executeLocalTool(ctx context.Context, name string, params map[string]interface{}) (map[string]interface{}, error) {
-	return map[string]interface{}{
-		"success": true,
-		"tool":    name,
-		"result":  "local tool placeholder",
-	}, nil
+	if globalToolDispatcher == nil {
+		return nil, fmt.Errorf("tool dispatcher not initialized")
+	}
+	res := globalToolDispatcher.Execute(ctx, name, params)
+	if !res.Success {
+		return nil, fmt.Errorf("[%s] %s", res.Code, res.Error)
+	}
+	return res.Result, nil
 }
 
-// setExecutionPlaneAllowedRoots placeholder
-func setExecutionPlaneAllowedRoots(roots []string) {}
+// toolExecutionStatus maps a dispatcher result code to an HTTP status.
+func toolExecutionStatus(code string) int {
+	switch code {
+	case "not_implemented":
+		return http.StatusNotImplemented
+	case "invalid_argument":
+		return http.StatusBadRequest
+	case "access_denied":
+		return http.StatusForbidden
+	default:
+		return http.StatusInternalServerError
+	}
+}
 
 func main() {
 	config := loadConfig()
@@ -2529,6 +2565,9 @@ func main() {
 	globalRetrievalRouter = retrievalRouter
 	globalTiAgentOrchestrator = tiAgentOrchestrator
 	globalMCPHubClient = mcpHubClient
+
+	// Real local tool dispatcher (replaces placeholder execution).
+	globalToolDispatcher = tools.NewDispatcher(cognitiveMemory, config.AllowedRoots)
 
 	server := NewServer(hub, config)
 
