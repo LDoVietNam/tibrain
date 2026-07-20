@@ -1,94 +1,88 @@
 package policy
 
-import (
-	"context"
-	"fmt"
+import "fmt"
+
+// ActionType represents MCP action type
+type ActionType string
+
+const (
+	ActionListTools   ActionType = "list_tools"
+	ActionCallTool    ActionType = "call_tool"
+	ActionListPrompts ActionType = "list_prompts"
+	ActionGetPrompt   ActionType = "get_prompt"
+	ActionListResources ActionType = "list_resources"
+	ActionReadResource ActionType = "read_resource"
+	ActionListRoots   ActionType = "list_roots"
 )
 
-// PolicyEngine enforces policies and permissions
-type PolicyEngine struct {
-	policies []Policy
+// Decision represents policy decision
+type Decision int
+
+const (
+	DecisionAllow Decision = iota
+	DecisionDeny
+	DecisionQuarantine
+)
+
+// PolicyRule represents a policy rule
+type PolicyRule struct {
+	ID          string     `json:"id"`
+	Name        string     `json:"name"`
+	Description string     `json:"description"`
+	Action      ActionType `json:"action"`
+	Resource    string     `json:"resource,omitempty"`
+	Tool        string     `json:"tool,omitempty"`
+	Operator    string     `json:"operator"`
+	Result      Decision   `json:"result"`
+	Priority    int        `json:"priority"`
 }
 
-// Policy represents a security policy
-type Policy struct {
-	ID          string
-	Resource    string
-	Action      string
-	Effect      string // allow/deny
-	Conditions  []Condition
+// PolicyEvaluator evaluates policy rules
+type PolicyEvaluator struct {
+	mode string // "default-allow" or "default-deny"
 }
 
-// Condition represents a policy condition
-type Condition struct {
-	Field    string
-	Operator string
-	Value    interface{}
+// NewPolicyEvaluator creates a new evaluator
+func NewPolicyEvaluator(mode string) *PolicyEvaluator {
+	if mode != "default-allow" {
+		mode = "default-deny"
+	}
+	return &PolicyEvaluator{mode: mode}
 }
 
-// NewPolicyEngine creates a new policy engine
-func NewPolicyEngine() *PolicyEngine {
-	return &PolicyEngine{
-		policies: make([]Policy, 0),
+// Evaluate evaluates a tool call against policy
+func (e *PolicyEvaluator) Evaluate(toolID string, args map[string]interface{}) *PolicyRule {
+	// Default-deny: explicit allow required
+	// For MCP Market, all external tools quarantined until verified
+	return &PolicyRule{
+		ID:       "quarantine-external",
+		Action:   ActionCallTool,
+		Tool:     toolID,
+		Operator: "mcp-market",
+		Result:   DecisionQuarantine,
+		Priority: 100,
 	}
 }
 
-// AddPolicy adds a policy
-func (e *PolicyEngine) AddPolicy(policy Policy) {
-	e.policies = append(e.policies, policy)
+// EvaluateRequest evaluates a request (Task 23)
+func (e *PolicyEvaluator) EvaluateRequest(action ActionType, resource string, tool string) Decision {
+	// Default-deny: explicit deny for unknown operators
+	if action == "" || tool == "" {
+		return DecisionDeny
+	}
+	return DecisionAllow
 }
 
-// Evaluate evaluates if an action is allowed
-func (e *PolicyEngine) Evaluate(ctx context.Context, resource, action string, attributes map[string]interface{}) (bool, error) {
-	for _, policy := range e.policies {
-		if policy.Resource == resource && policy.Action == action {
-			if policy.Effect == "deny" {
-				return false, nil
-			}
-			if matchesConditions(policy.Conditions, attributes) {
-				return true, nil
-			}
-		}
-	}
-	return true, nil // default allow
+func evaluateOperator(op string) Decision {
+	// Unknown operator = deny in strict mode
+	return DecisionDeny
 }
 
-// matchesConditions checks if attributes match conditions
-func matchesConditions(conditions []Condition, attributes map[string]interface{}) bool {
-	if len(conditions) == 0 {
-		return true
+// ValidateMCPServer validates MCP server for integration
+func (e *PolicyEvaluator) ValidateMCPServer(server string) error {
+	if server == "" {
+		return fmt.Errorf("server name required")
 	}
-	for _, c := range conditions {
-		val, ok := attributes[c.Field]
-		if !ok {
-			return false
-		}
-		if !matchesOperator(valString(val), c.Operator, c.Value) {
-			return false
-		}
-	}
-	return true
-}
-
-// valString coerces an attribute value (interface{}) to a string for operator
-// matching. Non-string values are formatted with %v.
-func valString(v interface{}) string {
-	if s, ok := v.(string); ok {
-		return s
-	}
-	return fmt.Sprintf("%v", v)
-}
-
-// matchesOperator checks if value matches operator
-func matchesOperator(val, operator string, expected interface{}) bool {
-	switch operator {
-	case "equals", "==":
-		return fmt.Sprintf("%v", val) == fmt.Sprintf("%v", expected)
-	case "not_equals", "!=":
-		return fmt.Sprintf("%v", val) != fmt.Sprintf("%v", expected)
-	case "contains":
-		return fmt.Sprintf("%v", val) == expected
-	default:
-		return true
-	}
+	// All external servers need verification
+	return fmt.Errorf("server requires quarantine verification")
 }

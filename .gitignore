@@ -34,5 +34,7 @@
 !*.bat
 !*.ps1
 
-# Internal packages
+# Internal packages — unignore parent dirs first, then Go sources
+!internal/
+!internal/**/
 !internal/**/*.go

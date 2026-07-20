@@ -1,0 +1,43 @@
+# TiBrain Configuration Example
+# Copy to config.yaml and fill in your values
+# For production: use environment variables for secrets
+
+tibrain:
+  port: 1810
+  data_dir: "data"
+
+cli_registry:
+  enabled: true
+
+handoff_tracking:
+  enabled: true
+
+skill_sync:
+  enabled: false
+
+mcp:
+  public_name: "tibrain"
+  public_mode: "sse"
+  expose_upstream_tools: true
+  compatibility: true
+  internal_hub:
+    enabled: true
+    url: "http://localhost:1810"
+  targets:
+    filesystem: "builtin"
+    fs: "builtin"
+    git: "git-mcp"
+    sqlite: "sqlite-mcp"
+    postgres: "postgres-mcp"
+    github: "github-mcp"
+    obsidian: "obsidian-mcp-server"
+    browser: "browser-extension"
+    chrome-devtools: "chrome-devtools-mcp"
+
+# Environment variables:
+# MCP_HUB_API_KEY - MCP Hub API key (required for secure operation)
+# MCPPROXY_API_KEY - MCP Proxy API key
+# TIBRAIN_CLOUDFLARE_SECRET - Cloudflare encryption key
+# TIBRAIN_SECRET_KEY - Fallback encryption key
+# TIBRAIN_INDEX_KNOWLEDGE - Set to "true" to auto-index on startup
+# TIBRAIN_ALLOWED_ROOTS - JSON array of allowed filesystem roots

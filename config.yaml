@@ -1,9 +1,12 @@
+# TiBrain Configuration
+# API keys should be provided via environment variables:
+# - MCP_HUB_API_KEY: MCP Hub API key
+# - MCPPROXY_API_KEY: MCP Proxy API key
+# - TIBRAIN_SECRET_KEY: Fallback encryption key
+
 tibrain:
-  port: 1811
+  port: 1810
   data_dir: "data"
-  api_keys:
-    - "test-key-123"
-    - "dev-key-456"
 
 cli_registry:
   enabled: true
@@ -19,12 +22,9 @@ mcp:
   public_mode: "sse"
   expose_upstream_tools: true
   compatibility: true
-  # Unified mode: TiBrain acts as both control plane and MCP proxy hub
-  # TiBrain provides built-in filesystem tools (read_file, write_file, list_files, etc.)
   internal_hub:
     enabled: true
     url: "http://localhost:1810"
-  # MCP server targets - sub-MCP servers that can be registered dynamically
   targets:
     filesystem: "builtin"
     fs: "builtin"
@@ -34,5 +34,4 @@ mcp:
     github: "github-mcp"
     obsidian: "obsidian-mcp-server"
     browser: "browser-extension"
-    # Chrome DevTools MCP - registered as sub-MCP of TiBrain
     chrome-devtools: "chrome-devtools-mcp"

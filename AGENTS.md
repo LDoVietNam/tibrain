@@ -282,9 +282,10 @@ curl http://localhost:1810/list-mcps      # List MCP servers (via tool)`r`ncurl 
 | POST | `/store-memory` | Store memory |
 | POST | `/query-memory` | Query memory |
 | GET | `/memory-stats` | Memory stats |
-| POST | `/api/v1/prompt/preflight` | **TARGET:** chọn PromptEnvelope cho TiRouter |
-| POST | `/api/v1/prompt/feedback` | **TARGET:** ghi outcome rút gọn |
-| GET | `/api/v1/prompt/catalog/version` | **TARGET:** version/ETag của catalog |
+| POST | `/api/v1/prompt/preflight` | Chọn PromptEnvelope cho TiRouter |
+| POST | `/api/v1/prompt/feedback` | Ghi outcome prompt |
+| GET | `/api/v1/prompt/catalog/version` | Version/ETag của catalog |
+| POST | `/api/v1/feedback/model-stats` | Cập nhật model performance stats |
 
 **MCP SSE:** `GET /mcp/sse`, `POST /mcp/message`
 

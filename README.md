@@ -91,7 +91,7 @@ Port được cấu hình trong `config.yaml`:
 
 ```yaml
 tibrain:
-  port: 1811  # hoặc 1810
+  port: 1810  # MCP Hub port
   data_dir: "data"
 ```
 
@@ -101,7 +101,7 @@ Tunnel config tại `.runtime/config/tunnel_config.json`:
 {
   "tunnel": "tibrain",
   "hostname": "tibrain.trepremium.online",
-  "target": "http://localhost:1811"
+  "target": "http://localhost:1810"
 }
 ```
 
@@ -126,7 +126,7 @@ CLI / Agent ──► TiRouter :1817 ──► CLIProxyAPI :1870 ──► Provi
                        │
                        ▼
                       ┌──────────────────────────────────────┐
-       HTTP :1811 ───►│            TiBrain Server            │
+       HTTP :1810 ───►│            TiBrain Server            │
                       │  (single-port HTTP, main.go)          │
                       ├──────────────────────────────────────┤
         /api/*  (REST)──►│  REST API layer                       │

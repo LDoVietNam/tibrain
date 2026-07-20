@@ -24,6 +24,6 @@ timeout /t 2 /nobreak >nul
 
 REM Start Cloudflare tunnel
 echo Starting Cloudflare tunnel...
-cloudflared tunnel run tibrain
+cloudflared tunnel run mcp-trepremium
 
 pause
